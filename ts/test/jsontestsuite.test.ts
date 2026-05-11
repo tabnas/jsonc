@@ -23,7 +23,7 @@ import { join } from 'node:path'
 import { Jsonic } from 'jsonic'
 import { Jsonc } from '../dist/jsonc.js'
 
-const SUITE_DIR = join(__dirname, '..', 'test', 'JSONTestSuite', 'test_parsing')
+const SUITE_DIR = join(__dirname, '..', '..', 'test', 'JSONTestSuite', 'test_parsing')
 
 const j = Jsonic.make().use(Jsonc, { disallowComments: true })
 
