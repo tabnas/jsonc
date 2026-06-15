@@ -1,13 +1,13 @@
 {
-  "name": "@jsonic/jsonc",
+  "name": "@tabnas/jsonc",
   "version": "0.8.0",
-  "description": "This plugin allows the Jsonic JSON parser to support JSONC syntax.",
+  "description": "This plugin allows the Tabnas JSON parser to support JSONC syntax.",
   "author": "Richard Rodger (http://richardrodger.com)",
   "license": "MIT",
   "main": "dist/jsonc.js",
   "types": "dist/jsonc.d.ts",
-  "homepage": "https://github.com/jsonicjs/jsonc",
-  "repository": "github:jsonicjs/jsonc",
+  "homepage": "https://github.com/tabnas/jsonc",
+  "repository": "github:tabnas/jsonc",
   "keywords": [
     "jsonc",
     "json",
@@ -28,7 +28,7 @@
     "repo-publish-quick": "npm run build && npm run test && npm run repo-tag && npm publish --access public --registry https://registry.npmjs.org "
   },
   "peerDependencies": {
-    "jsonic": ">=2"
+    "@tabnas/jsonic": "file:../../jsonic/ts"
   },
   "devDependencies": {
     "@types/node": "25.6.0",

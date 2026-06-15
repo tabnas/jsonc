@@ -1,4 +1,4 @@
-# @jsonic/jsonc
+# @tabnas/jsonc
 
 This plugin allows the Jsonic JSON parser to support JSONC syntax.
 

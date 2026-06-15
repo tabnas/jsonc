@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	jsonic "github.com/jsonicjs/jsonic/go"
+	jsonic "github.com/tabnas/jsonic/go"
 )
 
 func makeJsonc(opts ...map[string]any) *jsonic.Jsonic {
@@ -600,9 +600,9 @@ func TestAltGJsoncTag(t *testing.T) {
 			t.Errorf("rule %q missing", c.rule)
 			continue
 		}
-		alts := rs.Close
+		alts := rs.CloseAlts()
 		if c.isOpen {
-			alts = rs.Open
+			alts = rs.OpenAlts()
 		}
 
 		found := false

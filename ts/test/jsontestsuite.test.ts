@@ -20,7 +20,7 @@ import assert from 'node:assert'
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { Jsonic } from 'jsonic'
+import { Jsonic } from '@tabnas/jsonic'
 import { Jsonc } from '../dist/jsonc.js'
 
 const SUITE_DIR = join(__dirname, '..', '..', 'test', 'JSONTestSuite', 'test_parsing')
@@ -50,10 +50,8 @@ const N_KNOWN_LENIENT = new Set<string>([
   'n_object_non_string_key.json',
   'n_object_non_string_key_but_huge_number_instead.json',
   'n_object_repeated_null_null.json',
-  'n_object_single_quote.json',
   'n_single_space.json',
   'n_string_escape_x.json',
-  'n_string_single_quote.json',
   'n_structure_object_with_trailing_garbage.json',
 ])
 

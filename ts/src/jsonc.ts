@@ -1,7 +1,7 @@
 /* Copyright (c) 2021-2025 Richard Rodger, MIT License */
 
-// Import Jsonic types used by plugin.
-import { Jsonic } from 'jsonic'
+// Import Jsonic types used by plugin (legacy relaxed-JSON shim).
+import { Jsonic } from '@tabnas/jsonic'
 
 type JsoncOptions = {
   allowTrailingComma?: boolean

@@ -1,4 +1,4 @@
-# @jsonic/jsonc
+# @tabnas/jsonc
 
 This plugin allows the [Jsonic](https://jsonic.senecajs.org) JSON parser
 to parse [JSONC](https://github.com/microsoft/node-jsonc-parser) format
@@ -8,10 +8,10 @@ JSONC is a strict superset of JSON that adds single-line (`//`) and
 block (`/* */`) comments. Trailing commas in objects and arrays can be
 optionally enabled.
 
-[![npm version](https://img.shields.io/npm/v/@jsonic/jsonc.svg)](https://npmjs.com/package/@jsonic/jsonc)
-[![build](https://github.com/jsonicjs/jsonc/actions/workflows/build.yml/badge.svg)](https://github.com/jsonicjs/jsonc/actions/workflows/build.yml)
-[![Coverage Status](https://coveralls.io/repos/github/jsonicjs/jsonc/badge.svg?branch=main)](https://coveralls.io/github/jsonicjs/jsonc?branch=main)
-[![Known Vulnerabilities](https://snyk.io/test/github/jsonicjs/jsonc/badge.svg)](https://snyk.io/test/github/jsonicjs/jsonc)
+[![npm version](https://img.shields.io/npm/v/@tabnas/jsonc.svg)](https://npmjs.com/package/@tabnas/jsonc)
+[![build](https://github.com/tabnas/jsonc/actions/workflows/build.yml/badge.svg)](https://github.com/tabnas/jsonc/actions/workflows/build.yml)
+[![Coverage Status](https://coveralls.io/repos/github/tabnas/jsonc/badge.svg?branch=main)](https://coveralls.io/github/tabnas/jsonc?branch=main)
+[![Known Vulnerabilities](https://snyk.io/test/github/tabnas/jsonc/badge.svg)](https://snyk.io/test/github/tabnas/jsonc)
 
 
 | ![Voxgig](https://www.voxgig.com/res/img/vgt01r.png) | This open source module is sponsored and supported by [Voxgig](https://www.voxgig.com). |
@@ -34,14 +34,14 @@ The documentation below is organized along the
 Install:
 
 ```bash
-npm install @jsonic/jsonc @jsonic/jsonic-next
+npm install @tabnas/jsonc @tabnas/jsonic
 ```
 
 Parse:
 
 ```typescript
-import { Jsonic } from '@jsonic/jsonic-next'
-import { Jsonc } from '@jsonic/jsonc'
+import { Jsonic } from '@tabnas/jsonic'
+import { Jsonc } from '@tabnas/jsonc'
 
 const j = Jsonic.make().use(Jsonc)
 
@@ -54,7 +54,7 @@ const result = j('{ "name": "app", /* version */ "version": "1.0" }')
 Install:
 
 ```bash
-go get github.com/jsonicjs/jsonc/go
+go get github.com/tabnas/jsonc/go
 ```
 
 Parse:
@@ -64,8 +64,8 @@ package main
 
 import (
     "fmt"
-    jsonic "github.com/jsonicjs/jsonic/go"
-    jsonc "github.com/jsonicjs/jsonc/go"
+    jsonic "github.com/tabnas/jsonic/go"
+    jsonc "github.com/tabnas/jsonc/go"
 )
 
 func main() {
