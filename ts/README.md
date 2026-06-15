@@ -39,14 +39,13 @@ npm install @tabnas/jsonc @tabnas/jsonic
 
 Parse:
 
-```typescript
+```js
 import { Jsonic } from '@tabnas/jsonic'
 import { Jsonc } from '@tabnas/jsonc'
 
 const j = Jsonic.make().use(Jsonc)
 
-const result = j('{ "name": "app", /* version */ "version": "1.0" }')
-// => { name: 'app', version: '1.0' }
+j('{ "name": "app", /* version */ "version": "1.0" }') // => { name: 'app', version: '1.0' }
 ```
 
 ### Go
@@ -88,10 +87,12 @@ func main() {
 
 TypeScript:
 
-```typescript
+```js
+import { Jsonic } from '@tabnas/jsonic'
+import { Jsonc } from '@tabnas/jsonc'
+
 const j = Jsonic.make().use(Jsonc, { allowTrailingComma: true })
-j('{ "debug": true, "verbose": false, }')
-// => { debug: true, verbose: false }
+j('{ "debug": true, "verbose": false, }') // => { debug: true, verbose: false }
 ```
 
 Go:
