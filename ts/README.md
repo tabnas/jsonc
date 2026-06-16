@@ -241,6 +241,16 @@ Conformance testing uses third-party corpora under MIT License:
 See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) for details.
 
 
+
+## Grammar diagram
+
+The installed grammar as a railroad/syntax diagram, generated from the live
+grammar with [`@tabnas/railroad`](https://github.com/tabnas/railroad):
+
+![jsonc grammar railroad diagram](doc/grammar.svg)
+
+A vertical ASCII version is in [`doc/grammar.txt`](doc/grammar.txt).
+
 ## License
 
 MIT. Copyright (c) 2021-2025 Richard Rodger and contributors.
