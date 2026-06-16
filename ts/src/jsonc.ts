@@ -1,7 +1,9 @@
 /* Copyright (c) 2021-2025 Richard Rodger, MIT License */
 
-// Import Jsonic types used by plugin (legacy relaxed-JSON shim).
-import { Jsonic } from '@tabnas/jsonic'
+// The engine is the tabnas parser; jsonic supplies the relaxed-JSON
+// grammar that the embedded grammar text is authored in.
+import { Tabnas } from '@tabnas/parser'
+import { jsonic } from '@tabnas/jsonic'
 
 type JsoncOptions = {
   allowTrailingComma?: boolean
@@ -47,15 +49,16 @@ const grammarText = `
 `
 // --- END EMBEDDED jsonc-grammar.jsonic ---
 
-function Jsonc(jsonic: Jsonic, options: JsoncOptions) {
+function Jsonc(tn: Tabnas, options: JsoncOptions) {
   const comment_lex = true !== options.disallowComments
   const rule_exclude = options.allowTrailingComma ? '' : 'comma'
 
-  // Apply grammar: static options and val ZZ rule alt.
-  jsonic.grammar(Jsonic.make()(grammarText), { rule: { alt: { g: 'jsonc' } } })
+  // Parse the embedded relaxed-JSON grammar text with a jsonic-grammar
+  // engine, then install the resulting spec on this tabnas instance.
+  tn.grammar(new Tabnas().use(jsonic).parse(grammarText), { rule: { alt: { g: 'jsonc' } } })
 
   // Runtime options that depend on plugin arguments.
-  jsonic.options({
+  tn.options({
     comment: {
       lex: comment_lex,
     },
