@@ -20,14 +20,15 @@ import assert from 'node:assert'
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { Jsonic } from '@tabnas/jsonic'
+import { Tabnas } from '@tabnas/parser'
+import { jsonic } from '@tabnas/jsonic'
 import { Jsonc } from '../dist/jsonc.js'
 
 const SUITE_DIR = join(__dirname, '..', '..', 'test', 'JSONTestSuite', 'test_parsing')
 
-const j = Jsonic.make().use(Jsonc, { disallowComments: true })
+const j = new Tabnas().use(jsonic).use(Jsonc, { disallowComments: true })
 
-const parse = (src: string) => j(src)
+const parse = (src: string) => j.parse(src)
 
 const files = existsSync(SUITE_DIR)
   ? readdirSync(SUITE_DIR).filter((f) => f.endsWith('.json')).sort()

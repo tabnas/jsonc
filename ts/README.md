@@ -34,18 +34,19 @@ The documentation below is organized along the
 Install:
 
 ```bash
-npm install @tabnas/jsonc @tabnas/jsonic
+npm install @tabnas/parser @tabnas/jsonc @tabnas/jsonic
 ```
 
 Parse:
 
 ```js
-import { Jsonic } from '@tabnas/jsonic'
+import { Tabnas } from '@tabnas/parser'
+import { jsonic } from '@tabnas/jsonic'
 import { Jsonc } from '@tabnas/jsonc'
 
-const j = Jsonic.make().use(Jsonc)
+const j = new Tabnas().use(jsonic).use(Jsonc)
 
-j('{ "name": "app", /* version */ "version": "1.0" }') // => { name: 'app', version: '1.0' }
+j.parse('{ "name": "app", /* version */ "version": "1.0" }') // => { name: 'app', version: '1.0' }
 ```
 
 ### Go
@@ -88,11 +89,12 @@ func main() {
 TypeScript:
 
 ```js
-import { Jsonic } from '@tabnas/jsonic'
+import { Tabnas } from '@tabnas/parser'
+import { jsonic } from '@tabnas/jsonic'
 import { Jsonc } from '@tabnas/jsonc'
 
-const j = Jsonic.make().use(Jsonc, { allowTrailingComma: true })
-j('{ "debug": true, "verbose": false, }') // => { debug: true, verbose: false }
+const j = new Tabnas().use(jsonic).use(Jsonc, { allowTrailingComma: true })
+j.parse('{ "debug": true, "verbose": false, }') // => { debug: true, verbose: false }
 ```
 
 Go:
@@ -108,8 +110,8 @@ result, _ := j.Parse(`{ "debug": true, "verbose": false, }`)
 TypeScript:
 
 ```typescript
-const j = Jsonic.make().use(Jsonc, { disallowComments: true })
-j('{ "foo": /* not allowed */ true }') // throws
+const j = new Tabnas().use(jsonic).use(Jsonc, { disallowComments: true })
+j.parse('{ "foo": /* not allowed */ true }') // throws
 ```
 
 Go:
@@ -125,7 +127,7 @@ TypeScript — parse errors throw:
 
 ```typescript
 try {
-  j('{ "bad": }')
+  j.parse('{ "bad": }')
 } catch (err) {
   console.error(err.message)
 }
@@ -145,8 +147,8 @@ TypeScript:
 
 ```typescript
 import { readFileSync } from 'node:fs'
-const j = Jsonic.make().use(Jsonc, { allowTrailingComma: true })
-const config = j(readFileSync('tsconfig.json', 'utf8'))
+const j = new Tabnas().use(jsonic).use(Jsonc, { allowTrailingComma: true })
+const config = j.parse(readFileSync('tsconfig.json', 'utf8'))
 ```
 
 Go:
@@ -164,7 +166,7 @@ config, _ := j.Parse(string(src))
 ### TypeScript
 
 ```typescript
-function Jsonc(jsonic: Jsonic, options?: JsoncOptions): void
+function Jsonc(tn: Tabnas, options?: JsoncOptions): void
 
 type JsoncOptions = {
   allowTrailingComma?: boolean  // default: false
@@ -238,6 +240,16 @@ Conformance testing uses third-party corpora under MIT License:
 
 See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) for details.
 
+
+
+## Grammar diagram
+
+The installed grammar as a railroad/syntax diagram, generated from the live
+grammar with [`@tabnas/railroad`](https://github.com/tabnas/railroad):
+
+![jsonc grammar railroad diagram](doc/grammar.svg)
+
+A vertical ASCII version is in [`doc/grammar.txt`](doc/grammar.txt).
 
 ## License
 
