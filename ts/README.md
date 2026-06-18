@@ -251,6 +251,9 @@ grammar with [`@tabnas/railroad`](https://github.com/tabnas/railroad):
 
 A vertical ASCII version is in [`doc/grammar.txt`](doc/grammar.txt).
 
+The grammar is defined in the repository-root `jsonc-grammar.jsonic` and
+embedded into `src/jsonc.ts` (and the Go port) via `embed-grammar.js`.
+
 ## License
 
 MIT. Copyright (c) 2021-2025 Richard Rodger and contributors.
