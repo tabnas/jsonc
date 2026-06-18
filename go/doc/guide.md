@@ -21,8 +21,8 @@ the grammar is the expensive step, and rebuilding it per parse is the
 performance footgun the package guards against in its tests:
 
 ```go
-j := jsonic.Make()
-if err := j.Use(jsonc.Jsonc); err != nil {
+j := tabnasjsonic.Make()
+if err := j.Use(tabnasjsonc.Jsonc); err != nil {
     // a grammar install error (rare; usually a programming bug)
     panic(err)
 }
@@ -41,8 +41,8 @@ single trailing comma before `}` or `]` is then accepted in both objects
 and arrays:
 
 ```go
-j := jsonic.Make()
-j.Use(jsonc.Jsonc, map[string]any{"allowTrailingComma": true})
+j := tabnasjsonic.Make()
+j.Use(tabnasjsonc.Jsonc, map[string]any{"allowTrailingComma": true})
 
 r, _ := j.Parse(`{ "hello": [], "world": {}, }`)
 // r == map[string]any{"hello": []any{}, "world": map[string]any{}}
@@ -61,8 +61,8 @@ Pass `disallowComments: true` to turn off comment lexing. The parser then
 rejects both `//` and `/* */`:
 
 ```go
-nc := jsonic.Make()
-nc.Use(jsonc.Jsonc, map[string]any{"disallowComments": true})
+nc := tabnasjsonic.Make()
+nc.Use(tabnasjsonc.Jsonc, map[string]any{"disallowComments": true})
 
 r, _ := nc.Parse(`[ 1, 2, null, "foo" ]`)
 // r == []any{float64(1), float64(2), nil, "foo"}
@@ -74,15 +74,15 @@ _, err := nc.Parse(`{ "foo": /*comment*/ true }`)
 ## Handle parse errors
 
 `Parse` returns errors; it never panics. Type-assert to
-`*jsonic.JsonicError` for the structured fields:
+`*tabnasjsonic.JsonicError` for the structured fields:
 
 ```go
-j := jsonic.Make()
-j.Use(jsonc.Jsonc)
+j := tabnasjsonic.Make()
+j.Use(tabnasjsonc.Jsonc)
 
 _, err := j.Parse(`{ "bad": }`) // missing value
 if err != nil {
-    if je, ok := err.(*jsonic.JsonicError); ok {
+    if je, ok := err.(*tabnasjsonic.JsonicError); ok {
         _ = je.Code   // short code string, e.g. "unexpected"
         _ = je.Row    // 1-based line number
         _ = je.Col    // 1-based column number
@@ -107,8 +107,8 @@ src, err := os.ReadFile("tsconfig.json")
 if err != nil {
     return err
 }
-j := jsonic.Make()
-j.Use(jsonc.Jsonc, map[string]any{"allowTrailingComma": true})
+j := tabnasjsonic.Make()
+j.Use(tabnasjsonc.Jsonc, map[string]any{"allowTrailingComma": true})
 config, err := j.Parse(string(src))
 ```
 
@@ -118,8 +118,8 @@ config, err := j.Parse(string(src))
 after it; each extends the same instance:
 
 ```go
-j := jsonic.Make()
-j.Use(jsonc.Jsonc)   // JSONC: comments + optional trailing commas
+j := tabnasjsonic.Make()
+j.Use(tabnasjsonc.Jsonc)   // JSONC: comments + optional trailing commas
 j.Use(myPlugin)      // your own rule/option extensions
 ```
 

@@ -29,21 +29,21 @@ The package exports two names:
 
 | Export | Kind | Description |
 |---|---|---|
-| `Jsonc` | function | The plugin. Pass to `j.Use(jsonc.Jsonc, opts?)`. |
+| `Jsonc` | function | The plugin. Pass to `j.Use(tabnasjsonc.Jsonc, opts?)`. |
 | `Version` | `string` constant | The module version. |
 
 ### `Jsonc(j, pluginOpts)`
 
 ```go
-func Jsonc(j *jsonic.Jsonic, pluginOpts map[string]any) error
+func Jsonc(j *tabnasjsonic.Jsonic, pluginOpts map[string]any) error
 ```
 
 The plugin function. You normally do not call it directly — pass it to
 `Use`, which supplies the instance and the options map:
 
 ```go
-j := jsonic.Make()
-j.Use(jsonc.Jsonc, map[string]any{"allowTrailingComma": true})
+j := tabnasjsonic.Make()
+j.Use(tabnasjsonc.Jsonc, map[string]any{"allowTrailingComma": true})
 ```
 
 When invoked, the plugin installs the embedded JSONC grammar on `j`, sets
@@ -58,13 +58,13 @@ These come from the `jsonic`/tabnas engine, not this package:
 
 | Method | Signature | Description |
 |---|---|---|
-| `jsonic.Make` | `func Make(opts ...Options) *jsonic.Jsonic` | Construct a parser instance. |
+| `tabnasjsonic.Make` | `func Make(opts ...Options) *tabnasjsonic.Jsonic` | Construct a parser instance. |
 | `Use` | `func (j *Jsonic) Use(plugin, opts ...map[string]any) error` | Install a plugin. |
 | `Parse` | `func (j *Jsonic) Parse(src string) (any, error)` | Parse a source string. |
 
 ```go
-j := jsonic.Make()
-j.Use(jsonc.Jsonc)
+j := tabnasjsonic.Make()
+j.Use(tabnasjsonc.Jsonc)
 result, err := j.Parse(`{"a":1}`)
 ```
 
@@ -83,8 +83,8 @@ result, err := j.Parse(`{"a":1}`)
 | empty / comment-only / whitespace-only input | `nil` |
 
 ```go
-j := jsonic.Make()
-j.Use(jsonc.Jsonc)
+j := tabnasjsonic.Make()
+j.Use(tabnasjsonc.Jsonc)
 
 r, _ := j.Parse(`{ "a": false, "b": true, "c": [ 7.4 ] }`)
 // r == map[string]any{"a": false, "b": true, "c": []any{7.4}}
@@ -105,20 +105,20 @@ comments, no trailing commas".
 
 ```go
 // allow trailing commas
-a := jsonic.Make()
-a.Use(jsonc.Jsonc, map[string]any{"allowTrailingComma": true})
+a := tabnasjsonic.Make()
+a.Use(tabnasjsonc.Jsonc, map[string]any{"allowTrailingComma": true})
 a.Parse(`[ 1, 2, ]`)   // []any{float64(1), float64(2)}, nil
 
 // strict JSON, no comments
-s := jsonic.Make()
-s.Use(jsonc.Jsonc, map[string]any{"disallowComments": true})
+s := tabnasjsonic.Make()
+s.Use(tabnasjsonc.Jsonc, map[string]any{"disallowComments": true})
 s.Parse(`[ 1, 2, null, "foo" ]`)   // []any{float64(1), float64(2), nil, "foo"}, nil
 ```
 
 ## Errors
 
 `Parse` returns errors; it never panics. A syntax error is a
-`*jsonic.JsonicError`. Type-assert to read its fields:
+`*tabnasjsonic.JsonicError`. Type-assert to read its fields:
 
 | Field | Type | Description |
 |---|---|---|
@@ -142,11 +142,11 @@ Error codes you may encounter:
 | `unterminated_comment` | A `/* */` block comment is never closed. |
 
 ```go
-j := jsonic.Make()
-j.Use(jsonc.Jsonc)
+j := tabnasjsonic.Make()
+j.Use(tabnasjsonc.Jsonc)
 
 _, err := j.Parse(`"abc`)
-if je, ok := err.(*jsonic.JsonicError); ok {
+if je, ok := err.(*tabnasjsonic.JsonicError); ok {
     _ = je.Code // "unterminated_string"
     _ = je.Row  // 1
     _ = je.Col  // 1
@@ -174,8 +174,8 @@ An object is `{ "KEY": val, ... }` with double-quoted string keys
 (including the empty key `""`). An array is `[ val, val, ... ]`:
 
 ```go
-j := jsonic.Make()
-j.Use(jsonc.Jsonc)
+j := tabnasjsonic.Make()
+j.Use(tabnasjsonc.Jsonc)
 
 j.Parse(`{ "": true }`)                      // map[string]any{"": true}
 j.Parse(`{ "bar": 8, "xoo": "foo" }`)        // map[string]any{"bar": 8.0, "xoo": "foo"}

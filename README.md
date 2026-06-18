@@ -46,13 +46,13 @@ package main
 import (
     "fmt"
 
-    jsonic "github.com/tabnas/jsonic/go"
-    jsonc "github.com/tabnas/jsonc/go"
+    tabnasjsonic "github.com/tabnas/jsonic/go"
+    tabnasjsonc "github.com/tabnas/jsonc/go"
 )
 
 func main() {
-    j := jsonic.Make()
-    j.Use(jsonc.Jsonc)
+    j := tabnasjsonic.Make()
+    j.Use(tabnasjsonc.Jsonc)
 
     result, _ := j.Parse(`{ "foo": /*hello*/true }`)
     fmt.Println(result) // map[foo:true]

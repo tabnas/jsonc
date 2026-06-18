@@ -26,13 +26,13 @@ package main
 import (
     "fmt"
 
-    jsonic "github.com/tabnas/jsonic/go"
-    jsonc "github.com/tabnas/jsonc/go"
+    tabnasjsonic "github.com/tabnas/jsonic/go"
+    tabnasjsonc "github.com/tabnas/jsonc/go"
 )
 
 func main() {
-    j := jsonic.Make()
-    j.Use(jsonc.Jsonc)
+    j := tabnasjsonic.Make()
+    j.Use(tabnasjsonc.Jsonc)
 
     result, err := j.Parse(`{ "name": "app", /* version */ "version": "1.0" }`)
     if err != nil {
@@ -45,8 +45,8 @@ func main() {
 Enable trailing commas with an options map at install time:
 
 ```go
-j := jsonic.Make()
-j.Use(jsonc.Jsonc, map[string]any{"allowTrailingComma": true})
+j := tabnasjsonic.Make()
+j.Use(tabnasjsonc.Jsonc, map[string]any{"allowTrailingComma": true})
 result, _ := j.Parse(`{ "debug": true, "verbose": false, }`)
 // result == map[string]any{"debug": true, "verbose": false}
 ```

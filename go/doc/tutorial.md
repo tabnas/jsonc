@@ -46,8 +46,8 @@ import (
 )
 
 func main() {
-    j := jsonic.Make()
-    j.Use(jsonc.Jsonc)
+    j := tabnasjsonic.Make()
+    j.Use(tabnasjsonc.Jsonc)
 
     result, err := j.Parse(`{"a":1}`)
     if err != nil {
@@ -67,8 +67,8 @@ The reason to reach for JSONC is comments. Both line (`//`) and block
 a key and its value:
 
 ```go
-j := jsonic.Make()
-j.Use(jsonc.Jsonc)
+j := tabnasjsonic.Make()
+j.Use(tabnasjsonc.Jsonc)
 
 r, _ := j.Parse(`{ "foo": /*hello*/true }`)
 // r == map[string]any{"foo": true}
@@ -91,8 +91,8 @@ like strict JSON. Pass an options map when you install the plugin to
 permit it:
 
 ```go
-j := jsonic.Make()
-j.Use(jsonc.Jsonc, map[string]any{"allowTrailingComma": true})
+j := tabnasjsonic.Make()
+j.Use(tabnasjsonc.Jsonc, map[string]any{"allowTrailingComma": true})
 
 r, _ := j.Parse(`{ "hello": [], }`)
 // r == map[string]any{"hello": []any{}}
@@ -107,15 +107,15 @@ The option is set once, at install time. The instance is reusable: call
 ## 5. Handle an error
 
 Go does not throw — `Parse` returns the error as its second value. Check
-it, and type-assert to `*jsonic.JsonicError` for the structured fields:
+it, and type-assert to `*tabnasjsonic.JsonicError` for the structured fields:
 
 ```go
-j := jsonic.Make()
-j.Use(jsonc.Jsonc)
+j := tabnasjsonic.Make()
+j.Use(tabnasjsonc.Jsonc)
 
 _, err := j.Parse(`"abc`) // a string that is never closed
 if err != nil {
-    if je, ok := err.(*jsonic.JsonicError); ok {
+    if je, ok := err.(*tabnasjsonic.JsonicError); ok {
         fmt.Println(je.Code) // "unterminated_string"
         fmt.Println(je.Row)  // 1
         fmt.Println(je.Col)  // 1
