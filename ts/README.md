@@ -1,43 +1,28 @@
 # @tabnas/jsonc
 
-This plugin allows the [Jsonic](https://jsonic.senecajs.org) JSON parser
-to parse [JSONC](https://github.com/microsoft/node-jsonc-parser) format
-files (JSON with Comments).
-
-JSONC is a strict superset of JSON that adds single-line (`//`) and
-block (`/* */`) comments. Trailing commas in objects and arrays can be
-optionally enabled.
+A JSONC (JSON-with-comments) grammar plugin for the
+[tabnas](https://github.com/tabnas/parser) parser. It teaches the
+[jsonic](https://github.com/tabnas/jsonic) relaxed-JSON grammar to parse
+[JSONC](https://github.com/microsoft/node-jsonc-parser): standard JSON
+plus single-line (`//`) and block (`/* */`) comments, with optional
+trailing commas.
 
 [![npm version](https://img.shields.io/npm/v/@tabnas/jsonc.svg)](https://npmjs.com/package/@tabnas/jsonc)
 [![build](https://github.com/tabnas/jsonc/actions/workflows/build.yml/badge.svg)](https://github.com/tabnas/jsonc/actions/workflows/build.yml)
-[![Coverage Status](https://coveralls.io/repos/github/tabnas/jsonc/badge.svg?branch=main)](https://coveralls.io/github/tabnas/jsonc?branch=main)
-[![Known Vulnerabilities](https://snyk.io/test/github/tabnas/jsonc/badge.svg)](https://snyk.io/test/github/tabnas/jsonc)
-
 
 | ![Voxgig](https://www.voxgig.com/res/img/vgt01r.png) | This open source module is sponsored and supported by [Voxgig](https://www.voxgig.com). |
 | ---------------------------------------------------- | --------------------------------------------------------------------------------------- |
 
+## Install
 
-The documentation below is organized along the
-[Diátaxis](https://diataxis.fr) quadrants:
-
-- [Quick start](#quick-start) — tutorial
-- [How-to guides](#how-to-guides) — task recipes
-- [Reference](#reference) — API surface
-- [JSONC format](#jsonc-format) — explanation
-
-
-## Quick start
-
-### TypeScript
-
-Install:
+`@tabnas/jsonc` is a plugin; install it alongside the engine and the base
+grammar:
 
 ```bash
-npm install @tabnas/parser @tabnas/jsonc @tabnas/jsonic
+npm install @tabnas/parser @tabnas/jsonic @tabnas/jsonc
 ```
 
-Parse:
+## Example
 
 ```js
 import { Tabnas } from '@tabnas/parser'
@@ -46,47 +31,11 @@ import { Jsonc } from '@tabnas/jsonc'
 
 const j = new Tabnas().use(jsonic).use(Jsonc)
 
-j.parse('{ "name": "app", /* version */ "version": "1.0" }') // => { name: 'app', version: '1.0' }
+j.parse('{ "name": "app", /* version */ "version": "1.0" }')
+// => { name: 'app', version: '1.0' }
 ```
 
-### Go
-
-Install:
-
-```bash
-go get github.com/tabnas/jsonc/go
-```
-
-Parse:
-
-```go
-package main
-
-import (
-    "fmt"
-    jsonic "github.com/tabnas/jsonic/go"
-    jsonc "github.com/tabnas/jsonc/go"
-)
-
-func main() {
-    j := jsonic.Make()
-    j.Use(jsonc.Jsonc)
-
-    result, err := j.Parse(`{ "name": "app", /* version */ "version": "1.0" }`)
-    if err != nil {
-        panic(err)
-    }
-    fmt.Println(result)
-    // => map[name:app version:1.0]
-}
-```
-
-
-## How-to guides
-
-### Allow trailing commas
-
-TypeScript:
+Enable trailing commas with an option at install time:
 
 ```js
 import { Tabnas } from '@tabnas/parser'
@@ -94,165 +43,44 @@ import { jsonic } from '@tabnas/jsonic'
 import { Jsonc } from '@tabnas/jsonc'
 
 const j = new Tabnas().use(jsonic).use(Jsonc, { allowTrailingComma: true })
-j.parse('{ "debug": true, "verbose": false, }') // => { debug: true, verbose: false }
+j.parse('{ "debug": true, "verbose": false, }')
+// => { debug: true, verbose: false }
 ```
 
-Go:
+## Documentation
 
-```go
-j := jsonic.Make()
-j.Use(jsonc.Jsonc, map[string]any{"allowTrailingComma": true})
-result, _ := j.Parse(`{ "debug": true, "verbose": false, }`)
-```
+The docs follow the four [Diátaxis](https://diataxis.fr) quadrants:
 
-### Parse strict JSON (disable comments)
+- [Tutorial](doc/tutorial.md) — a guided first parse (learning).
+- [How-to guide](doc/guide.md) — task recipes (install as a plugin, set
+  options, handle errors, extend).
+- [Reference](doc/reference.md) — the public API, every option, and the
+  accepted syntax.
+- [Concepts](doc/concepts.md) — how the plugin works on the engine, and
+  why.
 
-TypeScript:
+## Grammar diagram
 
-```typescript
-const j = new Tabnas().use(jsonic).use(Jsonc, { disallowComments: true })
-j.parse('{ "foo": /* not allowed */ true }') // throws
-```
+The installed grammar as a railroad/syntax diagram, generated from the
+live grammar with
+[`@tabnas/railroad`](https://github.com/tabnas/railroad):
 
-Go:
+![jsonc grammar railroad diagram](doc/grammar.svg)
 
-```go
-j := jsonic.Make()
-j.Use(jsonc.Jsonc, map[string]any{"disallowComments": true})
-```
-
-### Handle parse errors
-
-TypeScript — parse errors throw:
-
-```typescript
-try {
-  j.parse('{ "bad": }')
-} catch (err) {
-  console.error(err.message)
-}
-```
-
-Go — errors are returned:
-
-```go
-if _, err := j.Parse(`{ "bad": }`); err != nil {
-    fmt.Println(err)
-}
-```
-
-### Parse a file
-
-TypeScript:
-
-```typescript
-import { readFileSync } from 'node:fs'
-const j = new Tabnas().use(jsonic).use(Jsonc, { allowTrailingComma: true })
-const config = j.parse(readFileSync('tsconfig.json', 'utf8'))
-```
-
-Go:
-
-```go
-src, _ := os.ReadFile("tsconfig.json")
-j := jsonic.Make()
-j.Use(jsonc.Jsonc, map[string]any{"allowTrailingComma": true})
-config, _ := j.Parse(string(src))
-```
-
-
-## Reference
-
-### TypeScript
-
-```typescript
-function Jsonc(tn: Tabnas, options?: JsoncOptions): void
-
-type JsoncOptions = {
-  allowTrailingComma?: boolean  // default: false
-  disallowComments?: boolean    // default: false
-}
-```
-
-Register with `jsonic.use(Jsonc, options?)`. After registration, invoke
-the jsonic instance as a function on a source string; it returns the
-parsed value or throws on syntax errors.
-
-| Option | Type | Default | Effect |
-|--------|------|---------|--------|
-| `allowTrailingComma` | `boolean` | `false` | Permit a trailing comma before `}` and `]` |
-| `disallowComments` | `boolean` | `false` | Reject `//` and `/* */` comments (strict JSON) |
-
-### Go
-
-```go
-func Jsonc(j *jsonic.Jsonic, pluginOpts map[string]any) error
-```
-
-Register with `j.Use(jsonc.Jsonc)` or `j.Use(jsonc.Jsonc, opts)` where
-`opts` is a `map[string]any`. `Parse` then returns `(any, error)` —
-`map[string]any` for objects, `[]any` for arrays, `float64` for numbers,
-`string`, `bool`, or `nil`.
-
-| Key | Type | Default | Effect |
-|-----|------|---------|--------|
-| `allowTrailingComma` | `bool` | `false` | Permit a trailing comma before `}` and `]` |
-| `disallowComments` | `bool` | `false` | Reject `//` and `/* */` comments (strict JSON) |
-
-
-## JSONC format
-
-JSONC follows [RFC 8259](https://tools.ietf.org/html/rfc8259) (JSON)
-with these extensions:
-
-- **Line comments**: `//` to end of line
-- **Block comments**: `/* */` (non-nesting)
-- **Trailing commas**: optional, in objects and arrays
-
-All other JSON rules apply:
-
-- Strings must be double-quoted
-- Standard escapes only: `\"` `\\` `\/` `\b` `\f` `\n` `\r` `\t` `\uXXXX`
-- Numbers: integer, decimal, scientific notation (no hex, octal, binary)
-- Keywords: `true`, `false`, `null` (case-sensitive)
-- Property names must be double-quoted strings
-
-### Conformance notes
-
-The plugin layers JSONC rules on top of jsonic, which is intentionally
-lenient in some places vs. strict RFC 8259. The test suite runs the
-[nst/JSONTestSuite](https://github.com/nst/JSONTestSuite) corpus in
-strict mode (`disallowComments: true`) and pins the known-lenient
-cases in `test/jsontestsuite.test.ts` (see `N_KNOWN_LENIENT`). Examples
-of accepted-but-non-RFC input include numbers with leading zeros and
-unquoted object keys. Use an RFC-strict parser if byte-perfect RFC 8259
-rejection is required.
-
+ASCII version: [`doc/grammar.txt`](doc/grammar.txt). The grammar is
+defined in the repository-root `jsonc-grammar.jsonic` and embedded into
+`src/jsonc.ts` (and the Go port) via `embed-grammar.js`.
 
 ## Acknowledgments
 
 Conformance testing uses third-party corpora under MIT License:
 
 - [nst/JSONTestSuite](https://github.com/nst/JSONTestSuite) by Nicolas
-  Seriot — vendored at `test/JSONTestSuite/` (the `test_parsing/` corpus).
+  Seriot — vendored at `test/JSONTestSuite/`.
 - [microsoft/node-jsonc-parser](https://github.com/microsoft/node-jsonc-parser) —
   parse-level test cases ported into `test/jsonc.test.ts`.
 
-See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) for details.
-
-
-
-## Grammar diagram
-
-The installed grammar as a railroad/syntax diagram, generated from the live
-grammar with [`@tabnas/railroad`](https://github.com/tabnas/railroad):
-
-![jsonc grammar railroad diagram](doc/grammar.svg)
-
-A vertical ASCII version is in [`doc/grammar.txt`](doc/grammar.txt).
-
-The grammar is defined in the repository-root `jsonc-grammar.jsonic` and
-embedded into `src/jsonc.ts` (and the Go port) via `embed-grammar.js`.
+See [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) for details.
 
 ## License
 
