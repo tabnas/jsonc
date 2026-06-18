@@ -15,7 +15,7 @@ The Go `jsonc` package does not parse anything by itself. It is a
 - the [`jsonic`](https://github.com/tabnas/jsonic) **base grammar** — the
   relaxed-JSON rules (`val`, `map`, `list`, `pair`, `elem`).
 
-`Jsonc` runs when you call `j.Use(jsonc.Jsonc, opts)`. It does **not** add
+`Jsonc` runs when you call `j.Use(tabnasjsonc.Jsonc, opts)`. It does **not** add
 rules of its own. It tightens jsonic's lenient defaults toward standard
 JSON, switches comment lexing on or off, and installs a small number of
 extra **alternates** on rules jsonic already provides. That is the whole
@@ -104,14 +104,14 @@ host-language types, and a couple of edge cases.
 
 | Aspect | TypeScript | Go |
 |---|---|---|
-| Build instance | `new Tabnas().use(jsonic).use(Jsonc)` | `jsonic.Make()` then `j.Use(jsonc.Jsonc)` |
-| Plugin signature | `Jsonc(tn, options?): void` | `Jsonc(j *jsonic.Jsonic, opts map[string]any) error` |
+| Build instance | `new Tabnas().use(jsonic).use(Jsonc)` | `tabnasjsonic.Make()` then `j.Use(tabnasjsonc.Jsonc)` |
+| Plugin signature | `Jsonc(tn, options?): void` | `Jsonc(j *tabnasjsonic.Jsonic, opts map[string]any) error` |
 | Options | object `{ allowTrailingComma?, disallowComments? }` | `map[string]any{"allowTrailingComma": ..., "disallowComments": ...}` |
 | Parse call | `j.parse(src)` → value or **throws** | `j.Parse(src)` → `(any, error)`, **never panics** |
 | Base import | `@tabnas/parser` (engine) + `@tabnas/jsonic` | `jsonic` only (it re-exports the engine) |
 
 You install `jsonic` explicitly as a separate `.use()` step in TS; in Go,
-`jsonic.Make()` already includes the base grammar, so you only `Use` the
+`tabnasjsonic.Make()` already includes the base grammar, so you only `Use` the
 `Jsonc` plugin.
 
 ### Value types
@@ -133,7 +133,7 @@ predictable concrete types:
 
 | Aspect | TypeScript | Go |
 |---|---|---|
-| Delivery | thrown `TabnasError` | returned `*jsonic.JsonicError` |
+| Delivery | thrown `TabnasError` | returned `*tabnasjsonic.JsonicError` |
 | Location fields | `err.lineNumber`, `err.columnNumber` | `je.Row`, `je.Col` (plus `je.Pos`, `je.Src`) |
 | Code field | `err.code` | `je.Code` |
 | Detail | `err.message` (formatted) | `je.Error()` (formatted), `je.Detail` (short) |
