@@ -1,5 +1,12 @@
 # @tabnas/jsonc
 
+<!-- tabnas-badges -->
+[![npm](https://tabnas.github.io/status/badges/jsonc-npm.svg)](https://www.npmjs.com/package/@tabnas/jsonc)
+[![CI](https://github.com/tabnas/jsonc/actions/workflows/ci.yml/badge.svg)](https://github.com/tabnas/jsonc/actions/workflows/ci.yml)
+[![go](https://tabnas.github.io/status/badges/jsonc-go.svg)](https://pkg.go.dev/github.com/tabnas/jsonc/go)
+[![tabnas standard](https://tabnas.github.io/status/badges/jsonc-standard.svg)](https://tabnas.github.io/status/)
+<!-- /tabnas-badges -->
+
 A JSONC (JSON-with-comments) grammar plugin for the
 [tabnas](https://github.com/tabnas/parser) parsing engine. It teaches the
 [jsonic](https://github.com/tabnas/jsonic) relaxed-JSON grammar to accept
