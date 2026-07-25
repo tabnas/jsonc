@@ -45,6 +45,7 @@ const grammarText = `
   }
 }
 `
+
 // --- END EMBEDDED jsonc-grammar.jsonic ---
 
 // Jsonc configures a jsonic instance for JSONC parsing.

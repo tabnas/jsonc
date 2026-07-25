@@ -20,8 +20,41 @@ func makeJsonc(opts ...map[string]any) *jsonic.Jsonic {
 	return j
 }
 
+// normalize recursively rewrites any insertion-ordered *jsonic.OrderedMap
+// object node (the shape a jsonic parse now yields for JSON/Jsonic objects)
+// into a plain map[string]any, recursing into nested maps and slices. This
+// lets the value/structure assertions below compare against the Go-authored
+// map[string]any literals with reflect.DeepEqual. Key order changing from
+// alphabetical to source/insertion order is expected and correct; dropping
+// the ordered wrapper here compares by value and shape, not by key order.
+func normalize(v any) any {
+	switch t := v.(type) {
+	case *jsonic.OrderedMap:
+		m := make(map[string]any, len(t.Vals))
+		for k, val := range t.Vals {
+			m[k] = normalize(val)
+		}
+		return m
+	case map[string]any:
+		m := make(map[string]any, len(t))
+		for k, val := range t {
+			m[k] = normalize(val)
+		}
+		return m
+	case []any:
+		s := make([]any, len(t))
+		for i, val := range t {
+			s[i] = normalize(val)
+		}
+		return s
+	default:
+		return v
+	}
+}
+
 func assert(t *testing.T, name string, got, want any) {
 	t.Helper()
+	got = normalize(got)
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("%s:\n  got:  %#v\n  want: %#v", name, got, want)
 	}
@@ -156,7 +189,7 @@ func TestNumbers(t *testing.T) {
 	assert(t, "ninety", r, float64(90))
 
 	r, _ = parse("90E+123")
-	assert(t, "sci-upper-plus", r, 90E+123)
+	assert(t, "sci-upper-plus", r, 90e+123)
 
 	r, _ = parse("90e+123")
 	assert(t, "sci-lower-plus", r, 90e+123)
@@ -165,10 +198,10 @@ func TestNumbers(t *testing.T) {
 	assert(t, "sci-lower-minus", r, 90e-123)
 
 	r, _ = parse("90E-123")
-	assert(t, "sci-upper-minus", r, 90E-123)
+	assert(t, "sci-upper-minus", r, 90e-123)
 
 	r, _ = parse("90E123")
-	assert(t, "sci-upper", r, 90E123)
+	assert(t, "sci-upper", r, 90e123)
 
 	r, _ = parse("90e123")
 	assert(t, "sci-lower", r, 90e123)
@@ -261,13 +294,13 @@ func TestLiterals(t *testing.T) {
 	assert(t, "sci", r, 23e3)
 
 	r, _ = parse("1.2E+3")
-	assert(t, "sci-plus", r, 1.2E+3)
+	assert(t, "sci-plus", r, 1.2e+3)
 
 	r, _ = parse("1.2E-3")
-	assert(t, "sci-minus", r, 1.2E-3)
+	assert(t, "sci-minus", r, 1.2e-3)
 
 	r, _ = parse("1.2E-3 // comment")
-	assert(t, "num-comment", r, 1.2E-3)
+	assert(t, "num-comment", r, 1.2e-3)
 }
 
 func TestObjects(t *testing.T) {
@@ -566,11 +599,11 @@ func TestUsePlugin(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	m, ok := result.(map[string]any)
+	om, ok := result.(*jsonic.OrderedMap)
 	if !ok {
-		t.Fatalf("expected map, got %T", result)
+		t.Fatalf("expected *jsonic.OrderedMap, got %T", result)
 	}
-	assert(t, "plugin", m, map[string]any{"a": float64(1), "b": "hello"})
+	assert(t, "plugin", om, map[string]any{"a": float64(1), "b": "hello"})
 }
 
 // TestAltGJsoncTag verifies the GrammarText setting {Rule:{Alt:{G:'jsonc'}}}
@@ -585,9 +618,9 @@ func TestAltGJsoncTag(t *testing.T) {
 
 	rsm := jc.RSM()
 	checks := []struct {
-		rule    string
-		isOpen  bool
-		tokSig  string
+		rule   string
+		isOpen bool
+		tokSig string
 	}{
 		{"val", true, "#ZZ"},
 		{"pair", false, "#CA #CB"},
