@@ -1,0 +1,13 @@
+input	expected	opts
+{,}	ERROR
+{ "foo": true, }	ERROR
+{ "bar": 8 "xoo": "foo" }	ERROR
+{ ,"bar": 8 }	ERROR
+{ ,"bar": 8, "foo" }	ERROR
+{ "bar": 8, "foo": }	ERROR
+{ 8, "foo": 9 }	ERROR
+{ "dep": {"bar": 1, "car": 	ERROR
+{ "dep": {"bar": 1,, "car": 	ERROR
+{ "dep": {"bar": "na", "dar": "ma", "car":  } }	ERROR
+{  "id": { "foo": { } } , }	ERROR
+{"prop1":"foo","prop2":"foo2","prop3":{"prp1":{""}}}	ERROR
