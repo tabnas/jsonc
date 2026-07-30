@@ -1,0 +1,15 @@
+input	expected	opts
+// this is a comment	UNDEFINED
+// this is a comment\n	UNDEFINED
+/* this is a comment*/	UNDEFINED
+/* this is a \r\ncomment*/	UNDEFINED
+/* this is a \ncomment*/	UNDEFINED
+false//hello	false
+1.2E-3 // comment	0.0012
+{ "foo": /*hello*/true }	{"foo":true}
+/* g */ { "foo": //f\n"bar" }	{"foo":"bar"}
+/* g\r\n */ { "foo": //f\n"bar" }	{"foo":"bar"}
+/* g\n */ { "foo": //f\n"bar"\n}	{"foo":"bar"}
+/* this is a	ERROR:unterminated_comment
+/* this is a \ncomment	ERROR:unterminated_comment
+/ ttt	ERROR:unexpected
