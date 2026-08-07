@@ -185,8 +185,17 @@ describe('doc-examples', () => {
     })
   }
 
-  it('found at least one tested example (sanity)', () => {
-    // Not a hard failure if a repo has no `// =>` examples yet.
-    assert.ok(testable >= 0, `tested ${testable} doc example block(s)`)
+  // `testable` is a COUNT, so the old `assert.ok(testable >= 0)` here could
+  // never fail: if the extractor stopped finding blocks — a changed fence
+  // marker, a moved doc, a broken regex — this harness would go green while
+  // testing nothing. That is the same defect class as a swallowed failure.
+  // A real floor, matching the blocks this repo actually has today.
+  const MIN_TESTED_BLOCKS = 15
+  it(`extracts at least ${MIN_TESTED_BLOCKS} testable doc example blocks`, () => {
+    assert.ok(files.length > 0, 'no doc files found at all')
+    assert.ok(testable >= MIN_TESTED_BLOCKS,
+      `only ${testable} doc example block(s) carry '// =>' assertions ` +
+      `(expected >= ${MIN_TESTED_BLOCKS}). Either docs lost their examples or ` +
+      `the extractor stopped matching them — do NOT lower this floor to go green.`)
   })
 })

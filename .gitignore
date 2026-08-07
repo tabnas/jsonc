@@ -34,3 +34,7 @@ yarn.lock
 
 # Go
 go/vendor/
+
+# Third-party conformance corpora — FETCHED, NEVER COMMITTED.
+# scripts/fetch-conformance-suites.sh populates this at pinned commit SHAs.
+test/vendor/

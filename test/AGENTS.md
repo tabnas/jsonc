@@ -1,5 +1,11 @@
 # Agents Guide — shared spec fixtures
 
+> `test/vendor/` is **gitignored** and holds the third-party conformance
+> corpora, fetched at pinned commit SHAs by
+> `scripts/fetch-conformance-suites.sh`. Never commit anything under it.
+> `test/known-lenient.json` is ours (our RFC-8259 leniency pin, one written
+> reason per entry) and IS tracked.
+
 `spec/*.tsv` holds the cross-runtime conformance fixtures. Both runtimes
 auto-discover and run **every** file in this directory, so a change here
 affects TypeScript and Go together — edit with that in mind.

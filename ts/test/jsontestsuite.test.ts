@@ -1,19 +1,22 @@
-/* Copyright (c) 2021-2025 Richard Rodger and other contributors, MIT License */
+/* Copyright (c) 2021-2026 Richard Rodger and other contributors, MIT License */
 
-// Uses the nst/JSONTestSuite corpus (Copyright (c) 2016 Nicolas Seriot,
-// MIT License) vendored at test/JSONTestSuite/. The upstream LICENSE is
-// kept in place; see also THIRD_PARTY_NOTICES.md.
-
-// Runs the nst/JSONTestSuite (RFC 8259) against the jsonc plugin in strict
-// mode (disallowComments: true, no trailing commas). Each file in
-// test_parsing/ is classified by prefix:
-//   y_*  must parse successfully
-//   n_*  must be rejected (known-lenient cases pinned in N_KNOWN_LENIENT)
-//   i_*  implementation-defined (recorded only)
+// Runs nst/JSONTestSuite (the RFC 8259 corpus) against the jsonc plugin in
+// strict mode (disallowComments: true, no trailing commas).
 //
-// Known-lenient n_* entries reflect intentional jsonic relaxations vs. strict
-// RFC 8259 (e.g. leading zeros, unquoted keys). They are pinned so the set
-// is caught if it grows or shrinks.
+// The corpus is third-party and is NOT committed. It is fetched at a pinned
+// commit SHA into the gitignored test/vendor/ by
+// scripts/fetch-conformance-suites.sh. See THIRD_PARTY_NOTICES.md.
+//
+// Each file in test_parsing/ is classified by prefix:
+//   y_*  must parse successfully
+//   n_*  must be rejected, except for the leniencies pinned (with a written
+//        reason each) in test/known-lenient.json
+//   i_*  implementation-defined by RFC 8259 — checked against the JSONC
+//        REFERENCE IMPLEMENTATION's verdict, recorded in test/vendor/corpus.json
+//
+// `go/jsontestsuite_test.go` runs the SAME corpus and the SAME pin file.
+//
+// IT NEVER SKIPS. If the corpus is missing the suite FAILS with instructions.
 
 import { test, describe } from 'node:test'
 import assert from 'node:assert'
@@ -24,93 +27,134 @@ import { Tabnas } from '@tabnas/parser'
 import { jsonic } from '@tabnas/jsonic'
 import { Jsonc } from '../dist/jsonc.js'
 
-const SUITE_DIR = join(__dirname, '..', '..', 'test', 'JSONTestSuite', 'test_parsing')
+const REPO = join(__dirname, '..', '..')
+const SUITE_DIR = join(REPO, 'test', 'vendor', 'JSONTestSuite', 'test_parsing')
+const PIN_FILE = join(REPO, 'test', 'known-lenient.json')
+const CORPUS_FILE = join(REPO, 'test', 'vendor', 'corpus.json')
 
-const j = new Tabnas().use(jsonic).use(Jsonc, { disallowComments: true })
+const MISSING =
+  `nst/JSONTestSuite corpus not found at ${SUITE_DIR}.\n` +
+  `It is third-party and is deliberately NOT committed.\n` +
+  `Fetch it (pinned commit SHA, idempotent):\n` +
+  `    scripts/fetch-conformance-suites.sh\n` +
+  `This test FAILS rather than skips: before 2026-08 this suite silently\n` +
+  `skipped whenever the corpus was absent, so CI reported green while\n` +
+  `measuring nothing. That must never be possible again.`
 
-const parse = (src: string) => j.parse(src)
-
-const files = existsSync(SUITE_DIR)
-  ? readdirSync(SUITE_DIR).filter((f) => f.endsWith('.json')).sort()
-  : []
-
-// Cases jsonic intentionally accepts that RFC 8259 requires rejecting.
-const N_KNOWN_LENIENT = new Set<string>([
-  'n_array_comma_after_close.json',
-  'n_number_+1.json',
-  'n_number_-01.json',
-  'n_number_-2..json',
-  'n_number_0.e1.json',
-  'n_number_2.e+3.json',
-  'n_number_2.e-3.json',
-  'n_number_2.e3.json',
-  'n_number_neg_int_starting_with_zero.json',
-  'n_number_neg_real_without_int_part.json',
-  'n_number_real_without_fractional_part.json',
-  'n_number_with_leading_zero.json',
-  'n_object_non_string_key.json',
-  'n_object_non_string_key_but_huge_number_instead.json',
-  'n_object_repeated_null_null.json',
-  'n_single_space.json',
-  'n_string_escape_x.json',
-  'n_structure_object_with_trailing_garbage.json',
-])
-
-describe('JSONTestSuite (RFC 8259)', () => {
-  if (0 === files.length) {
-    test('suite unavailable', () => {
-      console.warn(`JSONTestSuite not found at ${SUITE_DIR} — skipping.`)
+if (!existsSync(SUITE_DIR) || !existsSync(CORPUS_FILE)) {
+  describe('JSONTestSuite (RFC 8259)', () => {
+    test('RFC 8259 corpus must be present', () => {
+      assert.fail(MISSING)
     })
-    return
+  })
+} else {
+  const j = new Tabnas().use(jsonic).use(Jsonc, { disallowComments: true })
+  const parse = (src: string) => j.parse(src)
+
+  const files = readdirSync(SUITE_DIR).filter((f) => f.endsWith('.json')).sort()
+
+  // Cases jsonic intentionally accepts that RFC 8259 requires rejecting.
+  // Shared with the Go runtime; one written reason per entry.
+  const pin = JSON.parse(readFileSync(PIN_FILE, 'utf8')) as {
+    lenient: Record<string, string>
+  }
+  const N_KNOWN_LENIENT = new Set(Object.keys(pin.lenient))
+
+  // The reference implementation's verdict for every JSONTestSuite file, as
+  // recorded in the derived corpus. Used to decide the i_* (implementation-
+  // defined) cases: RFC 8259 leaves them open, so "what does the JSONC
+  // reference do" is the only meaningful standard.
+  const corpus = JSON.parse(readFileSync(CORPUS_FILE, 'utf8')) as {
+    cases: { name: string; valid: boolean }[]
+  }
+  const refVerdict = new Map<string, boolean>()
+  for (const c of corpus.cases) {
+    if (c.name.startsWith('JSONTestSuite:')) {
+      refVerdict.set(c.name.slice('JSONTestSuite:'.length), c.valid)
+    }
   }
 
-  test('y_* accept', () => {
-    const fails: { file: string; err: string }[] = []
-    for (const f of files.filter((x) => x.startsWith('y_'))) {
-      const src = readFileSync(join(SUITE_DIR, f), 'utf8')
-      try {
-        parse(src)
-      } catch (e: any) {
-        fails.push({ file: f, err: e?.code || e?.message || String(e) })
+  describe('JSONTestSuite (RFC 8259)', () => {
+    test('corpus is present and intact', () => {
+      assert.strictEqual(files.length, 318,
+        `expected 318 test_parsing files, found ${files.length} — the corpus ` +
+        `must not be narrowed. Re-run scripts/fetch-conformance-suites.sh.`)
+      for (const prefix of ['y_', 'n_', 'i_']) {
+        assert.ok(0 < files.filter((f) => f.startsWith(prefix)).length,
+          `no ${prefix}* files — corpus is not intact`)
       }
-    }
-    assert.deepEqual(fails, [], `y_* files that failed to parse:\n${fails.map((x) => `  ${x.file}: ${x.err}`).join('\n')}`)
-  })
+      // Every pinned leniency must name a file that actually exists, so the
+      // pin cannot rot into a set of no-op entries.
+      for (const f of N_KNOWN_LENIENT) {
+        assert.ok(files.includes(f), `pinned leniency names a missing file: ${f}`)
+        assert.ok(0 < pin.lenient[f].trim().length, `pinned leniency ${f} has no reason`)
+      }
+    })
 
-  test('n_* reject', () => {
-    const unexpectedAccept: string[] = []
-    const unexpectedReject: string[] = []
-    for (const f of files.filter((x) => x.startsWith('n_'))) {
-      const src = readFileSync(join(SUITE_DIR, f), 'utf8')
-      let accepted = false
-      try {
-        parse(src)
-        accepted = true
-      } catch {
-        // expected
+    test('y_* accept', () => {
+      const fails: { file: string; err: string }[] = []
+      for (const f of files.filter((x) => x.startsWith('y_'))) {
+        const src = readFileSync(join(SUITE_DIR, f), 'utf8')
+        try {
+          parse(src)
+        } catch (e: any) {
+          fails.push({ file: f, err: e?.code || e?.message || String(e) })
+        }
       }
-      const isLenient = N_KNOWN_LENIENT.has(f)
-      if (accepted && !isLenient) unexpectedAccept.push(f)
-      if (!accepted && isLenient) unexpectedReject.push(f)
-    }
-    assert.deepEqual(
-      { unexpectedAccept, unexpectedReject },
-      { unexpectedAccept: [], unexpectedReject: [] },
-      'n_* divergence from pinned allowlist',
-    )
-  })
+      assert.deepEqual(fails, [], `y_* files that failed to parse:\n${fails.map((x) => `  ${x.file}: ${x.err}`).join('\n')}`)
+    })
 
-  test('i_* implementation-defined', () => {
-    const results: { file: string; accepted: boolean }[] = []
-    for (const f of files.filter((x) => x.startsWith('i_'))) {
-      const src = readFileSync(join(SUITE_DIR, f), 'utf8')
-      try {
-        parse(src)
-        results.push({ file: f, accepted: true })
-      } catch {
-        results.push({ file: f, accepted: false })
+    test('n_* reject', () => {
+      const unexpectedAccept: string[] = []
+      const unexpectedReject: string[] = []
+      for (const f of files.filter((x) => x.startsWith('n_'))) {
+        const src = readFileSync(join(SUITE_DIR, f), 'utf8')
+        let accepted = false
+        try {
+          parse(src)
+          accepted = true
+        } catch {
+          // expected
+        }
+        const isLenient = N_KNOWN_LENIENT.has(f)
+        if (accepted && !isLenient) unexpectedAccept.push(f)
+        if (!accepted && isLenient) unexpectedReject.push(f)
       }
-    }
-    assert.ok(results.length > 0, 'expected at least one i_* file')
+      assert.deepEqual(
+        { unexpectedAccept, unexpectedReject },
+        { unexpectedAccept: [], unexpectedReject: [] },
+        'n_* divergence from pinned allowlist',
+      )
+    })
+
+    // Previously this block computed a classification for every i_* file and
+    // then asserted only `results.length > 0` — i.e. it asserted nothing about
+    // behaviour at all. Each file is now held to the JSONC reference
+    // implementation's verdict.
+    test('i_* match the JSONC reference implementation', () => {
+      const mismatches: string[] = []
+      const undecided: string[] = []
+      const iFiles = files.filter((x) => x.startsWith('i_'))
+      for (const f of iFiles) {
+        const want = refVerdict.get(f)
+        if (undefined === want) { undecided.push(f); continue }
+        const src = readFileSync(join(SUITE_DIR, f), 'utf8')
+        let accepted = false
+        try {
+          parse(src)
+          accepted = true
+        } catch {
+          // rejected
+        }
+        if (accepted !== want) {
+          mismatches.push(`${f}: we ${accepted ? 'accept' : 'reject'}, reference ${want ? 'accepts' : 'rejects'}`)
+        }
+      }
+      assert.deepEqual(undecided, [],
+        `i_* files with no recorded reference verdict:\n  ${undecided.join('\n  ')}`)
+      assert.ok(0 < iFiles.length, 'expected at least one i_* file')
+      assert.deepEqual(mismatches, [],
+        `i_* divergence from the JSONC reference implementation:\n  ${mismatches.join('\n  ')}`)
+    })
   })
-})
+}

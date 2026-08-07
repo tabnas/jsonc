@@ -3,23 +3,33 @@
 This project incorporates material from the projects listed below. The
 original copyright notices and license texts are preserved as required.
 
+**Neither corpus below is redistributed by this repository.** Both are
+FETCHED at a pinned commit SHA by `scripts/fetch-conformance-suites.sh` into
+`test/vendor/`, which `.gitignore` excludes. Their own `LICENSE` files come
+down with the fetch and stay in place. (Before 2026-08 the JSONTestSuite
+corpus was vendored here; it is not any more.)
+
 ## nst/JSONTestSuite
 
-Vendored at `test/JSONTestSuite/` for RFC 8259 conformance testing via
-`test/jsontestsuite.test.ts`. Only the `test_parsing/` corpus, `LICENSE`,
-and `README.md` from the upstream project are included; the upstream
-`LICENSE` is preserved in place.
+The RFC 8259 parsing corpus, used by `ts/test/jsontestsuite.test.ts` and
+`go/jsontestsuite_test.go`, and as an input source for the derived JSONC
+corpus.
 
 - Project: https://github.com/nst/JSONTestSuite
+- Pinned commit: `1ef36fa01286573e846ac449e8683f8833c5b26a`
 - License: MIT
 - Copyright (c) 2016 Nicolas Seriot
 
 ## microsoft/node-jsonc-parser
 
-Parse-level test cases in `test/jsonc.test.ts` were ported from
-`src/test/json.test.ts` of `microsoft/node-jsonc-parser`.
+The de-facto normative JSONC implementation (the parser VS Code uses). Its
+`src/test/json.test.ts` supplies hand-written conformance assertions, and the
+implementation itself — compiled from the pinned source at fetch time — acts
+as the reference oracle for the derived corpus. Parse-level test cases in
+`ts/test/jsonc.test.ts` and `go/jsonc_test.go` were also ported from it.
 
 - Project: https://github.com/microsoft/node-jsonc-parser
+- Pinned commit: `3c9b4203d663061d87d4d34dd0004690aef94db5` (tag `v3.3.1`)
 - License: MIT
 - Copyright (c) Microsoft Corporation
 

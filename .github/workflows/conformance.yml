@@ -1,0 +1,105 @@
+# Conformance CI — fetch the third-party corpora, THEN run both runtimes.
+#
+# Why this exists as a separate workflow rather than living in the shared
+# tabnas/.github polyglot-ci caller:
+#
+#   The conformance corpora (nst/JSONTestSuite, microsoft/node-jsonc-parser)
+#   are third-party and are deliberately NOT committed — they are fetched at
+#   pinned commit SHAs by scripts/fetch-conformance-suites.sh into the
+#   gitignored test/vendor/.
+#
+#   The shared workflow's ts job runs `npm test`, and ts/package.json has a
+#   `pretest` hook that runs the fetch, so the TypeScript half is already
+#   covered there. Its go job runs `go test` directly, with no hook — so
+#   without this workflow the Go conformance tests would have no corpus in CI.
+#
+#   They would then FAIL (they are written to fail, never to skip), which is
+#   correct but useless. This workflow makes CI actually measure the dial.
+#
+# The conformance suites are EXPECTED TO BE RED while the parser has real
+# gaps, so this workflow is informational until phase 2 closes them:
+# continue-on-error is set on the two conformance steps ONLY, and every other
+# step — including the fetch itself and the fetch-integrity check — is hard.
+# Do not extend continue-on-error to hide a broken harness.
+
+name: conformance
+
+on:
+  push:
+    branches: [ main, 'conformance-*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  fetch-and-measure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use LF line endings
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          path: jsonc
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.x'
+
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version: '1.24'
+
+      - name: Clone tabnas dependencies
+        shell: bash
+        run: |
+          set -e
+          for dep in parser debug json abnf railroad jsonic; do
+            git clone --depth 1 "https://github.com/tabnas/$dep.git" "$dep"
+          done
+
+      - name: Build TypeScript (dependencies, then this repo)
+        shell: bash
+        run: |
+          set -e
+          for pkg in parser debug json abnf railroad jsonic jsonc; do
+            ( cd "$pkg/ts" && npm i && npm run build --if-present )
+          done
+
+      # THE STEP THIS WORKFLOW EXISTS FOR. Runs before any test.
+      - name: Fetch conformance corpora (pinned SHAs)
+        shell: bash
+        working-directory: jsonc
+        run: ./scripts/fetch-conformance-suites.sh
+
+      - name: Verify the corpora actually landed
+        shell: bash
+        working-directory: jsonc
+        run: |
+          set -e
+          n=$(find test/vendor/JSONTestSuite/test_parsing -name '*.json' | wc -l)
+          test "$n" -eq 318 || { echo "expected 318 JSONTestSuite files, got $n"; exit 1; }
+          test -f test/vendor/corpus.json || { echo "corpus.json missing"; exit 1; }
+          echo "corpora present: $n RFC files + derived corpus"
+
+      - name: Set up go workspace
+        shell: bash
+        run: |
+          set -e
+          go work init
+          for gm in $(find . -name go.mod -not -path '*/vendor/*' -not -path '*/node_modules/*'); do
+            go work use "$(dirname "$gm")"
+          done
+
+      # EXPECTED RED until phase 2. Informational, but it must RUN.
+      - name: TypeScript conformance (expected red)
+        continue-on-error: true
+        shell: bash
+        working-directory: jsonc/ts
+        run: npm test
+
+      - name: Go conformance (expected red)
+        continue-on-error: true
+        shell: bash
+        working-directory: jsonc/go
+        run: go test -v ./...

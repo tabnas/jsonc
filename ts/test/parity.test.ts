@@ -84,11 +84,23 @@ function runSpec(file: string) {
 
         if (row.expected.startsWith('ERROR')) {
           const want = row.expected.slice('ERROR'.length).replace(/^:/, '')
-          assert.throws(
-            () => tn.parse(row.input),
-            (err: Error) => '' === want || err.message.includes(want),
-            `${file}:${row.line}: expected ${row.expected}`,
-          )
+          // A bare `ERROR` used to be satisfied by ANY throw — including a
+          // TypeError from a broken harness. Require a real Tabnas parse
+          // error, and check the substring when one is given.
+          let err: any
+          try {
+            const got = tn.parse(row.input)
+            assert.fail(`${file}:${row.line}: expected ${row.expected}, parsed to ${JSON.stringify(got)}`)
+          } catch (e: any) {
+            if ('AssertionError' === e?.name) throw e
+            err = e
+          }
+          assert.strictEqual(err?.constructor?.name, 'TabnasError',
+            `${file}:${row.line}: expected a Tabnas parse error, got ${err?.constructor?.name}: ${err?.message}`)
+          if ('' !== want) {
+            assert.ok(String(err.message).includes(want) || String(err.code).includes(want),
+              `${file}:${row.line}: expected ${row.expected}, got ${err.code}: ${err.message}`)
+          }
           return
         }
 

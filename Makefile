@@ -4,14 +4,21 @@
 # Local build/test resolve the unpublished @tabnas siblings via the
 # repo-set go.work + node_modules symlinks (admin/scripts/link.sh).
 
-.PHONY: all build test clean build-ts build-go test-ts test-go \
+.PHONY: all build test clean build-ts build-go test-ts test-go fetch-suites \
         clean-ts clean-go publish-ts publish-go tags-go reset
 
 all: build test
 
 build: build-ts build-go
 
-test: test-ts test-go
+test: fetch-suites test-ts test-go
+
+# Fetch the third-party conformance corpora at their pinned commit SHAs.
+# They are NOT committed (see .gitignore / ground rule: never vendor a
+# third-party test corpus). Idempotent, so this is cheap on a warm tree.
+# The conformance tests FAIL LOUDLY if it has not been run.
+fetch-suites:
+	./scripts/fetch-conformance-suites.sh
 
 clean: clean-ts clean-go
 
@@ -33,7 +40,7 @@ publish-ts: test-ts
 build-go:
 	cd go && go build ./...
 
-test-go:
+test-go: fetch-suites
 	cd go && go test -v ./...
 
 clean-go:
