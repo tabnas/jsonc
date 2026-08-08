@@ -95,9 +95,9 @@ linear.
 
 The grammar pushes jsonic toward JSON, but jsonic stays intentionally
 lenient in a few places. The repository runs the
-[nst/JSONTestSuite](https://github.com/nst/JSONTestSuite) corpus in strict
-mode and pins the divergences in `ts/test/jsontestsuite.test.ts`
-(`N_KNOWN_LENIENT`).
+[nst/JSONTestSuite](https://github.com/nst/JSONTestSuite) corpus in all
+three option modes (strict, default, `allowTrailingComma`) and pins the
+divergences per mode in `ts/test/jsontestsuite.test.ts`.
 
 **Accepted, though strict RFC 8259 rejects:**
 
@@ -111,7 +111,10 @@ mode and pins the divergences in `ts/test/jsontestsuite.test.ts`
   (`unterminated_comment`);
 - raw control characters inside a string, such as a literal tab or
   newline (`unprintable`);
-- the non-JSON `\v` string escape (`unexpected`);
+- the non-JSON `\v` string escape, and the non-JSON structural escapes
+  `\xHH` and `\u{...}` (`unexpected` / `invalid_unicode`);
+- `#` line comments — the jsonic base grammar lexes them, JSONC does not,
+  so the plugin disables that comment marker (`unexpected`);
 - capitalized or partial keywords (`True`, `nulllll`) and bare `-`
   (`unexpected`);
 - leading and doubled commas, e.g. `[ ,1 ]` and `[ 1,, 2 ]`;

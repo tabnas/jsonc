@@ -86,7 +86,10 @@ lenient in a few places.
 shapes.
 
 **Rejected, as JSON requires:** unterminated strings
-(`unterminated_string`) and comments (`unterminated_comment`),
+(`unterminated_string`) and comments (`unterminated_comment`), raw control
+characters inside a string (`unprintable`), the non-JSON `\v` escape and
+the non-JSON structural escapes `\xHH` / `\u{...}`, `#` line comments
+(lexed by the jsonic base grammar, disabled by this plugin),
 capitalized/partial keywords (`True`) and bare `-` (`unexpected`), leading
 and doubled commas, trailing commas (unless `allowTrailingComma`), and
 comments (when `disallowComments`).
@@ -139,18 +142,17 @@ predictable concrete types:
 | Detail | `err.message` (formatted) | `je.Error()` (formatted), `je.Detail` (short) |
 
 The error `Code` is the same string in both (`unterminated_string`,
-`unexpected`, etc.) for the same failure, with one known exception below.
+`unexpected`, `unprintable`, etc.) for the same failure.
 
 ### Known accepted differences
 
-- **`\v` string escape.** The Go string matcher accepts `\v` (vertical
-  tab) as a built-in escape; the TS version rejects it (`unexpected`).
-  This is a minor lexer deviation and is noted in `go/jsonc_test.go`.
-- **Some error codes for malformed strings.** A raw control character
-  inside a string reports `unprintable` in TS but `unterminated_string`
-  in Go (an engine-level difference inherited from the parser port). Both
-  fail at the same row/column; only the `Code` differs. Branch on `Code`
-  with this in mind.
+None currently. The two runtimes accept and reject the same documents and
+report the same error `Code` for the same failure. Earlier releases noted
+two divergences that no longer exist — Go accepting the non-JSON `\v`
+string escape, and Go reporting `unterminated_string` where TS reported
+`unprintable` for a raw control character in a string. Both are now
+pinned as shared fixtures in [`test/spec/strings.tsv`](../../test/spec/strings.tsv),
+which runs in both runtimes.
 
 ### Why this design
 

@@ -155,9 +155,16 @@ func TestStrings(t *testing.T) {
 	r, _ = parse(`"\u00DC"`)
 	assert(t, "unicode", r, "\u00DC")
 
-	// Note: \v is accepted by the jsonic Go string matcher as a built-in escape.
-	// This is a minor deviation from strict JSONC spec which only allows
-	// \", \\, \/, \b, \f, \n, \r, \t, and \uXXXX.
+	// Only the standard JSON escapes are accepted: \", \\, \/, \b, \f, \n,
+	// \r, \t and \uXXXX. The non-JSON \v escape is removed via the grammar's
+	// `string.escape.v: null`, and the non-JSON structural escapes \xHH and
+	// \u{...} via `string.escapeStrict`. (Matches the TS side; also pinned
+	// cross-runtime in test/spec/strings.tsv.)
+	for _, src := range []string{`"\v"`, `"\x42"`, `"\u{41}"`} {
+		if _, err := parse(src); err == nil {
+			t.Errorf("non-JSON escape accepted: %s", src)
+		}
+	}
 
 	_, err = parse(`"test`)
 	assertError(t, "unterminated", err, "unterminated_string")

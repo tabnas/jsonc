@@ -185,14 +185,12 @@ j.Parse(`[ { "a": null } ]`)                 // []any{map[string]any{"a": nil}}
 ### Strings
 
 Double-quoted only. Standard JSON escapes: `\"` `\\` `\/` `\b` `\f` `\n`
-`\r` `\t` and `\uXXXX`:
+`\r` `\t` and `\uXXXX`, and nothing else — the non-JSON `\v` escape and
+the non-JSON structural escapes `\xHH` and `\u{...}` are all rejected:
 
 ```go
 j.Parse(`"Ü"`)   // "Ü"
 ```
-
-(The Go string matcher also accepts `\v` as a built-in escape — a minor
-deviation from the TS version; see [concepts](concepts.md).)
 
 ### Numbers
 
@@ -210,7 +208,9 @@ j.Parse(`-1.93e-19`)   // -1.93e-19
 
 `true`, `false`, `null`, case-sensitive. Line comments run `//` to end of
 line; block comments `/* */` do not nest. Comments are allowed anywhere
-whitespace is and are discarded:
+whitespace is and are discarded. These two forms are the *only* comment
+syntax — the jsonic base grammar also lexes a `#` line comment, and the
+plugin turns that off, so `#` is a syntax error outside a string:
 
 ```go
 j.Parse(`true`)                            // true
