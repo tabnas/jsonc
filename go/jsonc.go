@@ -6,7 +6,7 @@ import (
 	jsonic "github.com/tabnas/jsonic/go"
 )
 
-const Version = "0.4.2"
+const Version = "0.4.3"
 
 // --- BEGIN EMBEDDED jsonc-grammar.jsonic ---
 const grammarText = `
