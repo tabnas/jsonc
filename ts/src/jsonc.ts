@@ -19,8 +19,9 @@ const grammarText = `
 {
   options: text: { lex: false }
   options: number: { hex: false oct: false bin: false sep: null exclude: "@/^\\\\./" }
-  options: string: { chars: '"' multiChars: '' allowUnknown: false }
+  options: string: { chars: '"' multiChars: '' allowUnknown: false escapeStrict: true }
   options: string: escape: { v: null }
+  options: comment: def: hash: { lex: false }
   options: map: { extend: false }
   options: lex: { empty: false }
   options: rule: { finish: false }

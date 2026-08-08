@@ -203,8 +203,9 @@ j.parse('[ { "a": null } ]')     // => [{ a: null }]
 ### Strings
 
 Double-quoted only. Standard JSON escapes: `\"` `\\` `\/` `\b` `\f` `\n`
-`\r` `\t` and `\uXXXX`. Raw control characters inside a string are
-rejected (`unprintable`):
+`\r` `\t` and `\uXXXX`, and nothing else — the non-JSON `\v` escape and
+the non-JSON structural escapes `\xHH` and `\u{...}` are all rejected.
+Raw control characters inside a string are rejected (`unprintable`):
 
 ```js
 import { Tabnas } from '@tabnas/parser'
@@ -252,7 +253,10 @@ j.parse('false//hello')  // => false
 ### Comments
 
 Line comments run `//` to end of line; block comments are `/* */` and do
-not nest. They are allowed anywhere whitespace is, and are discarded:
+not nest. They are allowed anywhere whitespace is, and are discarded.
+These two forms are the *only* comment syntax — the jsonic base grammar
+also lexes a `#` line comment, and the plugin turns that off, so `#` is a
+syntax error outside a string:
 
 ```js
 import { Tabnas } from '@tabnas/parser'
@@ -261,6 +265,7 @@ import { Jsonc } from '@tabnas/jsonc'
 const j = new Tabnas().use(jsonic).use(Jsonc)
 
 j.parse('/* g */ { "foo": //f\n"bar" }')   // => { foo: 'bar' }
+j.parse('{ "a": "#" }')                    // => { a: '#' }
 ```
 
 With `disallowComments: true`, both comment forms are rejected.
@@ -275,10 +280,11 @@ always rejected.
 
 The plugin layers JSONC rules on top of jsonic, which is intentionally
 lenient in a few spots versus strict RFC 8259. The repository runs the
-[nst/JSONTestSuite](https://github.com/nst/JSONTestSuite) corpus in strict
-mode (`disallowComments: true`) and pins the known-lenient cases in
-`ts/test/jsontestsuite.test.ts` (`N_KNOWN_LENIENT`). Examples of
-accepted-but-non-RFC input include numbers with a leading zero (`01` →
-`1`) and a few unquoted-key shapes. If byte-perfect RFC 8259 rejection is
+[nst/JSONTestSuite](https://github.com/nst/JSONTestSuite) corpus (all 318
+`test_parsing` files) in all three option modes — strict
+(`disallowComments: true`), default, and `allowTrailingComma` — and pins
+the known-lenient cases per mode in `ts/test/jsontestsuite.test.ts`.
+Examples of accepted-but-non-RFC input include numbers with a leading zero
+(`01` → `1`) and a few unquoted-key shapes. If byte-perfect RFC 8259 rejection is
 required, use an RFC-strict parser. See [concepts](concepts.md) for the
 full accepted-vs-rejected discussion.

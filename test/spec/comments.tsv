@@ -10,6 +10,15 @@ false//hello	false
 /* g */ { "foo": //f\n"bar" }	{"foo":"bar"}
 /* g\r\n */ { "foo": //f\n"bar" }	{"foo":"bar"}
 /* g\n */ { "foo": //f\n"bar"\n}	{"foo":"bar"}
+# JSONC has only // and /* */ comments. The jsonic base grammar also lexes
+# a '#' line comment; the plugin turns that off, so '#' is never trivia.
+#	ERROR:unexpected
+# not a comment\n1	ERROR:unexpected
+1 # not a comment	ERROR:unexpected
+{"a":"b"}#	ERROR:unexpected
+{"a":"b"}#{}	ERROR:unexpected
+{ "a": "#" }	{"a":"#"}
+{ "#": "#" }	{"#":"#"}
 /* this is a	ERROR:unterminated_comment
 /* this is a \ncomment	ERROR:unterminated_comment
 / ttt	ERROR:unexpected

@@ -34,3 +34,10 @@ yarn.lock
 
 # Go
 go/vendor/
+
+# Pinned upstream checkouts the conformance fixtures are DERIVED from
+# (microsoft/node-jsonc-parser, nst/JSONTestSuite) plus the derived
+# corpus.json. Fetched on demand by test/fetch-conformance-suites.sh; never
+# committed. NOTE: test/JSONTestSuite/ is a different thing — it IS vendored
+# here, is tracked, and is the corpus ts/test/jsontestsuite.test.ts runs.
+test/vendor/

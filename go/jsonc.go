@@ -17,8 +17,9 @@ const grammarText = `
 {
   options: text: { lex: false }
   options: number: { hex: false oct: false bin: false sep: null exclude: "@/^\\./" }
-  options: string: { chars: '"' multiChars: '' allowUnknown: false }
+  options: string: { chars: '"' multiChars: '' allowUnknown: false escapeStrict: true }
   options: string: escape: { v: null }
+  options: comment: def: hash: { lex: false }
   options: map: { extend: false }
   options: lex: { empty: false }
   options: rule: { finish: false }
@@ -65,7 +66,10 @@ func Jsonc(j *jsonic.Jsonic, pluginOpts map[string]any) error {
 		return err
 	}
 
-	// Runtime options that depend on plugin arguments.
+	// Runtime options that depend on plugin arguments. Note that
+	// `string.escapeStrict` is NOT re-applied here: the grammar text is the
+	// single source of truth for it and the engine's grammar-text option
+	// converter carries the key across.
 	j.SetOptions(jsonic.Options{
 		Comment: &jsonic.CommentOptions{Lex: &commentLex},
 		Rule: &jsonic.RuleOptions{
