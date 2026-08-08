@@ -177,7 +177,7 @@ go test -v ./...       # jsonc_test.go (unit, mirrors the TS unit cases),
 
 The repo-root [`Makefile`](Makefile) wraps both halves: `make build|test`
 run the TS and Go sides, and `make publish-go V=x.y.z` injects `V` into the
-`const Version` in `go/jsonc.go`, commits, and tags `go/vX.Y.Z`.
+`const VERSION` in `go/jsonc.go`, commits, and tags `go/vX.Y.Z`.
 `make publish-ts` publishes the TS package at its `package.json`
 version. `ts/Makefile` has the same targets scoped to the package, plus
 a standalone `make embed`.
