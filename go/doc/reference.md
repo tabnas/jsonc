@@ -30,7 +30,7 @@ The package exports two names:
 | Export | Kind | Description |
 |---|---|---|
 | `Jsonc` | function | The plugin. Pass to `j.Use(tabnasjsonc.Jsonc, opts?)`. |
-| `Version` | `string` constant | The module version. |
+| `VERSION` | `string` constant | The module version. Always equals `ts/package.json` "version". |
 
 ### `Jsonc(j, pluginOpts)`
 

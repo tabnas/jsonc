@@ -18,15 +18,16 @@ Install all three.
 
 ## Exports
 
-The module exports exactly two names:
+The module exports exactly three names:
 
 | Export | Kind | Description |
 |---|---|---|
 | `Jsonc` | function | The plugin. Pass to `instance.use(Jsonc, options?)`. |
+| `VERSION` | `string` constant | The package version. Always equals `package.json` "version". |
 | `JsoncOptions` | type | The options object accepted by the plugin. |
 
 ```ts
-import { Jsonc } from '@tabnas/jsonc'
+import { Jsonc, VERSION } from '@tabnas/jsonc'
 import type { JsoncOptions } from '@tabnas/jsonc'
 ```
 
