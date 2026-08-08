@@ -177,10 +177,10 @@ go test -v ./...       # jsonc_test.go (unit, mirrors the TS unit cases),
 
 The repo-root [`Makefile`](Makefile) wraps both halves: `make build|test`
 run the TS and Go sides, and `make publish-go V=x.y.z` injects `V` into the
-`const Version` in `go/jsonc.go` (currently `0.4.1`), commits, and tags
-`go/vX.Y.Z`. `make publish-ts` publishes the TS package at its
-`package.json` version (currently `0.4.1`). `ts/Makefile` has the same
-targets scoped to the package, plus a standalone `make embed`.
+`const Version` in `go/jsonc.go`, commits, and tags `go/vX.Y.Z`.
+`make publish-ts` publishes the TS package at its `package.json`
+version. `ts/Makefile` has the same targets scoped to the package, plus
+a standalone `make embed`.
 
 Local builds resolve the unpublished siblings without a workspace file:
 the TS side via the `file:../../{jsonic,parser,debug,railroad}/ts`
