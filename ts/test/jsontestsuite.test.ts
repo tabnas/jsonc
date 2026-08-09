@@ -7,12 +7,15 @@
 // Runs the nst/JSONTestSuite (RFC 8259) against the jsonc plugin in all
 // three option modes. Each file in test_parsing/ is classified by prefix:
 //   y_*  must parse successfully (in every mode — JSONC is a JSON superset)
-//   n_*  must be rejected, except the pinned per-mode allowlists below
-//   i_*  implementation-defined (recorded only)
+//   n_*  must be rejected, except the pinned per-mode allowlists
+//   i_*  implementation-defined — verdict pinned, not merely counted
 //
-// The n_* allowlists are pinned exactly, so the test fails if a lenience is
-// gained or lost. Update them deliberately when behaviour genuinely changes;
-// do not re-pin to silence a red run.
+// The allowlists live in test/known-lenient.json and are read by BOTH this
+// file and go/jsontestsuite_test.go, so a TS/Go divergence on any pinned case
+// surfaces as a failure in one runtime instead of as silence. They are pinned
+// exactly, so the test fails if a lenience is gained or lost. Update them
+// deliberately when behaviour genuinely changes; do not re-pin to silence a
+// red run.
 //
 // The suite is vendored in this repository, so it is always available. If it
 // is missing the test FAILS rather than skipping — a conformance run that
@@ -33,44 +36,27 @@ const files = existsSync(SUITE_DIR)
   ? readdirSync(SUITE_DIR).filter((f) => f.endsWith('.json')).sort()
   : []
 
+// The shared cross-runtime pin. Keys ending in `-note` / `$`-prefixed are
+// prose for the reader and are not case names.
+const PIN_FILE = join(__dirname, '..', '..', 'test', 'known-lenient.json')
+const PIN = JSON.parse(readFileSync(PIN_FILE, 'utf8'))
+
 // n_* cases jsonic intentionally accepts that strict RFC 8259 rejects: number
 // relaxations (leading zero, bare `+`, trailing `.`), unquoted map keys, and
 // whitespace-only input (which jsonc resolves to `undefined` via its `#ZZ`
 // alt rather than erroring).
-const LENIENT_STRICT = [
-  'n_number_+1.json',
-  'n_number_-01.json',
-  'n_number_-2..json',
-  'n_number_0.e1.json',
-  'n_number_2.e+3.json',
-  'n_number_2.e-3.json',
-  'n_number_2.e3.json',
-  'n_number_neg_int_starting_with_zero.json',
-  'n_number_neg_real_without_int_part.json',
-  'n_number_real_without_fractional_part.json',
-  'n_number_with_leading_zero.json',
-  'n_object_non_string_key.json',
-  'n_object_non_string_key_but_huge_number_instead.json',
-  'n_object_repeated_null_null.json',
-  'n_single_space.json',
-]
+const LENIENT_STRICT = Object.keys(PIN.strict)
 
 // With comments enabled (the jsonc default) three more n_* files become legal
 // JSONC: they are only invalid because they contain a `//` or `/* */` comment.
-const LENIENT_COMMENTS = [
-  'n_object_trailing_comment.json',
-  'n_object_trailing_comment_slash_open.json',
-  'n_structure_object_with_comment.json',
-]
+const LENIENT_COMMENTS = Object.keys(PIN.comments)
 
 // With allowTrailingComma four more become legal JSONC: they are only invalid
 // because of a trailing comma in an object or array.
-const LENIENT_TRAILING_COMMA = [
-  'n_array_extra_comma.json',
-  'n_array_number_and_comma.json',
-  'n_object_lone_continuation_byte_in_key_and_trailing_comma.json',
-  'n_object_trailing_comma.json',
-]
+const LENIENT_TRAILING_COMMA = Object.keys(PIN.trailingComma)
+
+// The exact set of implementation-defined files jsonc accepts.
+const I_ACCEPTED: string[] = PIN.implementationDefinedAccepted
 
 const MODES: { name: string; options: any; lenient: Set<string> }[] = [
   {
@@ -101,6 +87,33 @@ describe('JSONTestSuite (RFC 8259)', () => {
     assert.strictEqual(files.filter((f) => f.startsWith('y_')).length, 95)
     assert.strictEqual(files.filter((f) => f.startsWith('n_')).length, 188)
     assert.strictEqual(files.filter((f) => f.startsWith('i_')).length, 35)
+  })
+
+  // The pin is only worth anything if every entry names a real corpus file and
+  // carries a written reason. A pin that has drifted off the corpus, or that
+  // records a lenience nobody justified, is an allowlist pretending to be a
+  // measurement.
+  test('known-lenient pin is intact', () => {
+    const named = [
+      ...Object.entries(PIN.strict as Record<string, string>),
+      ...Object.entries(PIN.comments as Record<string, string>),
+      ...Object.entries(PIN.trailingComma as Record<string, string>),
+    ]
+    const corpus = new Set(files)
+    const missing = named.filter(([f]) => !corpus.has(f)).map(([f]) => f)
+    assert.deepEqual(missing, [], 'pinned files that are not in the corpus')
+
+    const unreasoned = named.filter(([, why]) => 20 >= why.length).map(([f]) => f)
+    assert.deepEqual(unreasoned, [], 'pinned files with no written reason')
+
+    const iMissing = I_ACCEPTED.filter((f) => !corpus.has(f))
+    assert.deepEqual(iMissing, [], 'pinned i_* files that are not in the corpus')
+
+    // Sizes pinned so a set cannot be quietly grown.
+    assert.strictEqual(LENIENT_STRICT.length, 15)
+    assert.strictEqual(LENIENT_COMMENTS.length, 3)
+    assert.strictEqual(LENIENT_TRAILING_COMMA.length, 4)
+    assert.strictEqual(I_ACCEPTED.length, 31)
   })
 
   for (const mode of MODES) {
@@ -148,18 +161,27 @@ describe('JSONTestSuite (RFC 8259)', () => {
         )
       })
 
-      test('i_* implementation-defined', () => {
-        const results: { file: string; accepted: boolean }[] = []
+      // RFC 8259 leaves these to the implementation, so neither verdict is
+      // wrong — but an unrecorded verdict is. This used to classify every
+      // i_* file and then assert only that 35 results existed, discarding
+      // the verdicts: it could not fail however the parser behaved. The
+      // accepted set is now pinned exactly, in every mode.
+      test('i_* implementation-defined verdicts match the pin', () => {
+        const accepted: string[] = []
         for (const f of files.filter((x) => x.startsWith('i_'))) {
           const src = readFileSync(join(SUITE_DIR, f), 'utf8')
           try {
             parse(src)
-            results.push({ file: f, accepted: true })
+            accepted.push(f)
           } catch {
-            results.push({ file: f, accepted: false })
+            // rejected
           }
         }
-        assert.strictEqual(results.length, 35, 'expected all i_* files to be classified')
+        assert.deepEqual(
+          accepted.sort(),
+          [...I_ACCEPTED].sort(),
+          'i_* accepted set diverged from test/known-lenient.json',
+        )
       })
     })
   }

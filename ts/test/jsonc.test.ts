@@ -15,7 +15,59 @@ import { Jsonc } from '../dist/jsonc.js'
 const j = new Tabnas().use(jsonic).use(Jsonc)
 
 
+// A bare `assert.throws(fn)` passes on ANY throw — including a TypeError from
+// a broken harness or a renamed import — so a file full of them can report
+// green while testing nothing. `rejects` demands a genuine Tabnas parse error
+// (constructor `TabnasError`, carrying a `code`), and when a pattern is
+// supplied it must match that error's code or message. The pattern argument is
+// enforced, not advisory: passing one that does not match is a failure.
+function rejects(src: string, pattern?: RegExp, parser: any = j) {
+  let err: any
+  try {
+    const got = parser.parse(src)
+    assert.fail(
+      `expected ${JSON.stringify(src)} to be rejected; parsed to ${JSON.stringify(got)}`,
+    )
+  } catch (e: any) {
+    if (e && 'AssertionError' === e.name) throw e
+    err = e
+  }
+  assert.strictEqual(
+    err?.constructor?.name,
+    'TabnasError',
+    `${JSON.stringify(src)}: expected a Tabnas parse error, got ` +
+      `${err?.constructor?.name}: ${err?.message}`,
+  )
+  assert.ok(
+    'string' === typeof err.code && 0 < err.code.length,
+    `${JSON.stringify(src)}: parse error carries no code`,
+  )
+  if (undefined !== pattern) {
+    assert.ok(
+      pattern.test(err.code) || pattern.test(String(err.message)),
+      `${JSON.stringify(src)}: error ${err.code} does not match ${pattern}`,
+    )
+  }
+}
+
+
 describe('jsonc', () => {
+
+  // The helper itself must be able to fail, otherwise it is the very thing it
+  // exists to prevent. These pin all three of its failure modes plus the
+  // success path.
+  test('rejects() helper is not a no-op', () => {
+    assert.throws(() => rejects('{"a":1}'), /to be rejected/)
+    assert.throws(() => rejects('{,}', /no_such_code/), /does not match/)
+    assert.throws(
+      () => rejects('anything', undefined, {
+        parse() { throw new TypeError('harness broke') },
+      }),
+      /expected a Tabnas parse error/,
+    )
+    rejects('{,}', /unexpected/)
+  })
+
 
   test('happy', () => {
     assert.deepEqual(j.parse('{"a":1}'), { a: 1 })
@@ -28,9 +80,9 @@ describe('jsonc', () => {
     assert.deepEqual(j.parse('/* this is a comment*/'), undefined)
     assert.deepEqual(j.parse('/* this is a \r\ncomment*/'), undefined)
     assert.deepEqual(j.parse('/* this is a \ncomment*/'), undefined)
-    assert.throws(() => j.parse('/* this is a'), /unterminated_comment/)
-    assert.throws(() => j.parse('/* this is a \ncomment'), /unterminated_comment/)
-    assert.throws(() => j.parse('/ ttt'), /unexpected/)
+    rejects('/* this is a', /unterminated_comment/)
+    rejects('/* this is a \ncomment', /unterminated_comment/)
+    rejects('/ ttt', /unexpected/)
   })
 
 
@@ -45,12 +97,12 @@ describe('jsonc', () => {
     assert.deepEqual(j.parse('"\\t"'), '\t')
     assert.deepEqual(j.parse('"\u88ff"'), '\u88ff')
     assert.deepEqual(j.parse('"\u200B\u2028"'), '\u200B\u2028')
-    assert.throws(() => j.parse('"\\v"'), /unexpected/)
-    assert.throws(() => j.parse('"test'), /unterminated_string/)
-    assert.throws(() => j.parse('"test\n"'), /unprintable/)
-    assert.throws(() => j.parse('"\t"'), /unprintable/)
-    assert.throws(() => j.parse('"\t "'), /unprintable/)
-    assert.throws(() => j.parse('"\0 "'), /unprintable/)
+    rejects('"\\v"', /unexpected/)
+    rejects('"test', /unterminated_string/)
+    rejects('"test\n"', /unprintable/)
+    rejects('"\t"', /unprintable/)
+    rejects('"\t "', /unprintable/)
+    rejects('"\0 "', /unprintable/)
   })
 
 
@@ -71,8 +123,8 @@ describe('jsonc', () => {
     assert.deepEqual(j.parse('90e123'), 90e123)
     assert.deepEqual(j.parse('01'), 1)
     assert.deepEqual(j.parse('-01'), -1)
-    assert.throws(() => j.parse('-'), /unexpected/)
-    assert.throws(() => j.parse('.0'), /unexpected/)
+    rejects('-', /unexpected/)
+    rejects('.0', /unexpected/)
   })
 
 
@@ -81,10 +133,10 @@ describe('jsonc', () => {
     assert.deepEqual(j.parse('false'), false)
     assert.deepEqual(j.parse('null'), null)
 
-    assert.throws(() => j.parse('nulllll'), /unexpected/)
-    assert.throws(() => j.parse('True'), /unexpected/)
-    assert.throws(() => j.parse('foo-bar'), /unexpected/)
-    assert.throws(() => j.parse('foo bar'), /unexpected/)
+    rejects('nulllll', /unexpected/)
+    rejects('True', /unexpected/)
+    rejects('foo-bar', /unexpected/)
+    rejects('foo bar', /unexpected/)
 
     assert.deepEqual(j.parse('false//hello'), false)
   })
@@ -143,27 +195,27 @@ describe('jsonc', () => {
 
 
   test('objects with errors', () => {
-    assert.throws(() => j.parse('{,}'))
-    assert.throws(() => j.parse('{ "foo": true, }'))
-    assert.throws(() => j.parse('{ "bar": 8 "xoo": "foo" }'))
-    assert.throws(() => j.parse('{ ,"bar": 8 }'))
-    assert.throws(() => j.parse('{ ,"bar": 8, "foo" }'))
-    assert.throws(() => j.parse('{ "bar": 8, "foo": }'))
-    assert.throws(() => j.parse('{ 8, "foo": 9 }'))
+    rejects('{,}')
+    rejects('{ "foo": true, }')
+    rejects('{ "bar": 8 "xoo": "foo" }')
+    rejects('{ ,"bar": 8 }')
+    rejects('{ ,"bar": 8, "foo" }')
+    rejects('{ "bar": 8, "foo": }')
+    rejects('{ 8, "foo": 9 }')
   })
 
 
   test('array with errors', () => {
-    assert.throws(() => j.parse('[,]'))
-    assert.throws(() => j.parse('[ 1 2, 3 ]'))
-    assert.throws(() => j.parse('[ ,1, 2, 3 ]'))
-    assert.throws(() => j.parse('[ ,1, 2, 3, ]'))
+    rejects('[,]')
+    rejects('[ 1 2, 3 ]')
+    rejects('[ ,1, 2, 3 ]')
+    rejects('[ ,1, 2, 3, ]')
   })
 
 
   test('errors', () => {
-    assert.throws(() => j.parse('1,1'))
-    assert.throws(() => j.parse(''))
+    rejects('1,1')
+    rejects('')
   })
 
 
@@ -173,7 +225,7 @@ describe('jsonc', () => {
     assert.deepEqual(nc.parse('[ 1, 2, null, "foo" ]'), [1, 2, null, 'foo'])
     assert.deepEqual(nc.parse('{ "hello": [], "world": {} }'), { hello: [], world: {} })
 
-    assert.throws(() => nc.parse('{ "foo": /*comment*/ true }'))
+    rejects('{ "foo": /*comment*/ true }', undefined, nc)
   })
 
 
@@ -187,9 +239,9 @@ describe('jsonc', () => {
     assert.deepEqual(jc.parse('[ 1, 2, ]'), [1, 2])
     assert.deepEqual(jc.parse('[ 1, 2 ]'), [1, 2])
 
-    assert.throws(() => j.parse('{ "hello": [], }'))
-    assert.throws(() => j.parse('{ "hello": [], "world": {}, }'))
-    assert.throws(() => j.parse('[ 1, 2, ]'))
+    rejects('{ "hello": [], }')
+    rejects('{ "hello": [], "world": {}, }')
+    rejects('[ 1, 2, ]')
   })
 
   test('misc', () => {
@@ -197,14 +249,14 @@ describe('jsonc', () => {
     assert.deepEqual(j.parse('{ "foo": "bar" }'), { "foo": "bar" })
     assert.deepEqual(j.parse('{ "foo": {"bar": 1, "car": 2 } }'), { "foo": { "bar": 1, "car": 2 } })
     assert.deepEqual(j.parse('{ "foo": {"bar": 1, "car": 8 }, "goo": {} }'), { "foo": { "bar": 1, "car": 8 }, "goo": {} })
-    assert.throws(() => j.parse('{ "dep": {"bar": 1, "car": '))
-    assert.throws(() => j.parse('{ "dep": {"bar": 1,, "car": '))
-    assert.throws(() => j.parse('{ "dep": {"bar": "na", "dar": "ma", "car":  } }'))
+    rejects('{ "dep": {"bar": 1, "car": ')
+    rejects('{ "dep": {"bar": 1,, "car": ')
+    rejects('{ "dep": {"bar": "na", "dar": "ma", "car":  } }')
 
     assert.deepEqual(j.parse('["foo", null ]'), ["foo", null])
-    assert.throws(() => j.parse('["foo", null, ]'))
-    assert.throws(() => j.parse('["foo", null,, ]'))
-    assert.throws(() => j.parse('[["foo", null,, ],'))
+    rejects('["foo", null, ]')
+    rejects('["foo", null,, ]')
+    rejects('[["foo", null,, ],')
 
     assert.deepEqual(j.parse('true'), true)
     assert.deepEqual(j.parse('false'), false)
@@ -222,7 +274,7 @@ describe('jsonc', () => {
     assert.deepEqual(j.parse('{"id": "$", "v": [ null, null] }'),
       { "id": "$", "v": [null, null] })
 
-    assert.throws(() => j.parse('{  "id": { "foo": { } } , }'))
+    rejects('{  "id": { "foo": { } } , }')
 
     assert.deepEqual(j.parse('{ }'), {})
     assert.deepEqual(j.parse('{ "foo": "bar" }'), { "foo": "bar" })
@@ -233,7 +285,7 @@ describe('jsonc', () => {
     assert.deepEqual(j.parse('/* g */ { "foo": //f\n"bar" }'), { foo: 'bar' })
     assert.deepEqual(j.parse('/* g\r\n */ { "foo": //f\n"bar" }'), { foo: 'bar' })
     assert.deepEqual(j.parse('/* g\n */ { "foo": //f\n"bar"\n}'), { foo: 'bar' })
-    assert.throws(() => j.parse('{"prop1":"foo","prop2":"foo2","prop3":{"prp1":{""}}}'  ))
+    rejects('{"prop1":"foo","prop2":"foo2","prop3":{"prp1":{""}}}'  )
     assert.deepEqual(j.parse('{ "key1": { "key11": [ "val111", "val112" ] }, "key2": [ { "key21": false, "key22": 221 }, null, [{}] ] }'),
       { "key1": { "key11": ["val111", "val112"] }, "key2": [{ "key21": false, "key22": 221 }, null, [{}]] })
 

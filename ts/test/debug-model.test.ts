@@ -3,10 +3,12 @@
 
 /*  debug-model.test.js
  *  Composition test: the jsonc grammar plugin layered with the official
- *  @tabnas/debug plugin. @tabnas/debug is a devDependency, but this
- *  resolves it dynamically and SKIPS when it is absent so the suite stays
- *  runnable outside the package; point TABNAS_DEBUG_PATH at a sibling
- *  checkout's built plugin (e.g. ../../debug/ts/dist/debug.js) to run it.
+ *  @tabnas/debug plugin. @tabnas/debug is a DECLARED devDependency, so under
+ *  `npm test` it is always present. This used to SKIP when it was absent,
+ *  which meant a broken or unlinked devDependency silently disabled the
+ *  composition check while the run still reported green. It now FAILS; point
+ *  TABNAS_DEBUG_PATH at a sibling checkout's built plugin (e.g.
+ *  ../../debug/ts/dist/debug.js) if package resolution differs locally.
  */
 'use strict'
 
@@ -32,15 +34,32 @@ function loadDebug() {
 }
 
 const Debug = loadDebug()
-const skip = Debug ? false : '@tabnas/debug not available (set TABNAS_DEBUG_PATH)'
+
+// NOT a skip. @tabnas/debug is a devDependency of this package; if it cannot
+// be resolved the composition test must go RED, not quietly vanish.
+if (!Debug) {
+  describe('compose: jsonc + @tabnas/debug', () => {
+    it('@tabnas/debug must be resolvable', () => {
+      assert.fail(
+        '@tabnas/debug could not be required. It is a declared devDependency, ' +
+          'so `npm test` must be able to load it. Run `npm install` in ts/ (and ' +
+          're-run admin/scripts/link.sh for a sibling checkout), or set ' +
+          'TABNAS_DEBUG_PATH to a built debug plugin. This test FAILS rather ' +
+          'than skips so a missing dependency cannot hide the composition check.',
+      )
+    })
+  })
+}
 
 // Build the jsonc grammar instance exactly as the repo's own tests do.
 function makeJsonc() {
   return new Tabnas().use(jsonic).use(Jsonc)
 }
 
-describe('compose: jsonc + @tabnas/debug', () => {
-  it('parses normally with the debug plugin installed', { skip }, () => {
+// Guarded so the missing-dependency failure above is the ONLY failure when
+// debug is unresolvable; these assertions would otherwise fail as noise.
+if (Debug) describe('compose: jsonc + @tabnas/debug', () => {
+  it('parses normally with the debug plugin installed', () => {
     const tn = makeJsonc()
     tn.use(Debug, { print: false, trace: false })
     assert.deepStrictEqual(
@@ -49,7 +68,7 @@ describe('compose: jsonc + @tabnas/debug', () => {
     )
   })
 
-  it('debug.model() returns the structured jsonc grammar', { skip }, () => {
+  it('debug.model() returns the structured jsonc grammar', () => {
     const tn = makeJsonc()
     tn.use(Debug, { print: false, trace: false })
     const m = tn.debug.model()

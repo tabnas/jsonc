@@ -6,9 +6,9 @@ original copyright notices and license texts are preserved as required.
 ## nst/JSONTestSuite
 
 Vendored at `test/JSONTestSuite/` for RFC 8259 conformance testing via
-`test/jsontestsuite.test.ts`. Only the `test_parsing/` corpus, `LICENSE`,
-and `README.md` from the upstream project are included; the upstream
-`LICENSE` is preserved in place.
+`ts/test/jsontestsuite.test.ts` and `go/jsontestsuite_test.go`. Only the
+`test_parsing/` corpus, `LICENSE`, and `README.md` from the upstream project
+are included; the upstream `LICENSE` is preserved in place.
 
 - Project: https://github.com/nst/JSONTestSuite
 - License: MIT

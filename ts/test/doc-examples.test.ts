@@ -115,7 +115,15 @@ function importsToRequire(code) {
 }
 
 // Rewrite `<expr>  // => <expected>` lines into __eq(expr, expected) calls.
+// ARROW is matched against a SINGLE line, so `$` is the end of that line.
 const ARROW = /\/\/\s*=>(.*)$/
+// HAS_ARROW is the block-level opt-in gate, matched against the whole joined
+// block. It needs the `m` flag: without it `$` means end-of-string, and since
+// `.` does not cross newlines, the gate only fired when the `// =>` happened
+// to sit on the block's LAST line. Any block whose assertions were followed by
+// further code was silently dropped and never ran. (Two blocks in this repo's
+// own docs were being dropped that way.)
+const HAS_ARROW = /\/\/\s*=>(.*)$/m
 function rewriteAssertions(code) {
   let count = 0
   const out = code.split('\n').map((line) => {
@@ -171,7 +179,7 @@ describe('doc-examples', () => {
     blocks.forEach((b, bi) => {
       if (b.ignore) return
       const joined = b.code.join('\n')
-      if (!ARROW.test(joined)) return // no assertions -> skip
+      if (!HAS_ARROW.test(joined)) return // no assertions -> skip
       const { code, count } = rewriteAssertions(importsToRequire(joined))
       if (count === 0) return
       testable++
@@ -185,8 +193,22 @@ describe('doc-examples', () => {
     })
   }
 
-  it('found at least one tested example (sanity)', () => {
-    // Not a hard failure if a repo has no `// =>` examples yet.
-    assert.ok(testable >= 0, `tested ${testable} doc example block(s)`)
+  // `testable` is a COUNT, so the old `assert.ok(testable >= 0)` here could
+  // never fail: if the extractor stopped finding blocks — a changed fence
+  // marker, a moved doc, a broken regex — this harness reported green while
+  // testing nothing. A real floor instead, measured against the blocks this
+  // repo actually has.
+  // 17 = the blocks this repo has today. It was 15 before the HAS_ARROW fix
+  // above; the two extra are blocks whose `// =>` was not on the last line and
+  // which had therefore never run.
+  const MIN_TESTED_BLOCKS = 17
+  it(`extracts at least ${MIN_TESTED_BLOCKS} testable doc example blocks`, () => {
+    assert.ok(0 < files.length, 'no doc files found at all')
+    assert.ok(
+      testable >= MIN_TESTED_BLOCKS,
+      `only ${testable} doc example block(s) carry '// =>' assertions ` +
+        `(expected >= ${MIN_TESTED_BLOCKS}). Either the docs lost their examples ` +
+        `or the extractor stopped matching them — do NOT lower this floor to go green.`,
+    )
   })
 })

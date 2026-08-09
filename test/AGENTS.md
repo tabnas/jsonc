@@ -1,5 +1,16 @@
 # Agents Guide — shared spec fixtures
 
+This directory holds two kinds of shared, cross-runtime test data:
+
+- `spec/*.tsv` — the input → output conformance fixtures described below.
+- `known-lenient.json` — the RFC 8259 leniency pin for the vendored
+  `JSONTestSuite/` corpus, read by BOTH `ts/test/jsontestsuite.test.ts` and
+  `go/jsontestsuite_test.go`. It is **not** a skip list: it records, with one
+  written reason per entry, every case where jsonc deliberately diverges from
+  strict RFC 8259, and it is pinned exactly so a lenience cannot be gained or
+  lost unnoticed. Change an entry only together with the behaviour change that
+  justifies it; never re-pin to silence a red run.
+
 `spec/*.tsv` holds the cross-runtime conformance fixtures. Both runtimes
 auto-discover and run **every** file in this directory, so a change here
 affects TypeScript and Go together — edit with that in mind.
