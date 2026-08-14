@@ -1,0 +1,17 @@
+{
+  "$schema": "https://tabnas.dev/schema/plugin.schema.json",
+  "name": "@tabnas/jsonc",
+  "go": "github.com/tabnas/jsonc/go",
+  "description": "JSONC (JSON with comments) parsing for the tabnas engine.",
+  "base": "@tabnas/jsonic",
+  "engine": "@tabnas/parser",
+  "grammar": "jsonc-grammar.jsonic",
+  "extensions": [
+    ".jsonc"
+  ],
+  "specDir": "test/spec",
+  "errorCodes": [],
+  "docs": "https://tabnas.dev/docs/packages",
+  "repository": "https://github.com/tabnas/jsonc",
+  "versionSource": "ts/package.json"
+}
