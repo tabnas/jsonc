@@ -14,6 +14,8 @@ the JSONC dialect: standard JSON plus single-line (`//`) and block
 (`/* */`) comments, with optional trailing commas. Available for both
 TypeScript/JavaScript and Go.
 
+Docs, guides, the error reference and the playground: **[tabnas.dev](https://tabnas.dev)**.
+
 This repository contains:
 
 | Path | Description |
