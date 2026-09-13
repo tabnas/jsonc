@@ -16,7 +16,7 @@ import (
 ## Install the plugin
 
 `Jsonc` is a plugin. Make a `jsonic` instance, install `Jsonc` with
-`Use`, then `Parse`. Build the instance **once** and reuse it — building
+`Use`, then `Parse`. Build the instance **once** and reuse it; building
 the grammar is the expensive step, and rebuilding it per parse is the
 performance footgun the package guards against in its tests:
 
@@ -52,7 +52,7 @@ r, _ = j.Parse(`[ 1, 2, ]`)
 ```
 
 Without this option, the same inputs return an error. This permits *one*
-trailing comma — leading (`[ ,1 ]`) and doubled (`[ 1,, 2 ]`) commas are
+trailing comma; leading (`[ ,1 ]`) and doubled (`[ 1,, 2 ]`) commas are
 always errors.
 
 ## Parse strict JSON (reject comments)
@@ -68,7 +68,7 @@ r, _ := nc.Parse(`[ 1, 2, null, "foo" ]`)
 // r == []any{float64(1), float64(2), nil, "foo"}
 
 _, err := nc.Parse(`{ "foo": /*comment*/ true }`)
-// err != nil  — comments are no longer allowed
+// err != nil  (comments are no longer allowed)
 ```
 
 ## Handle parse errors
@@ -99,7 +99,7 @@ closed).
 ## Parse a config file
 
 JSONC is the format VS Code uses for `tsconfig.json`, `settings.json`,
-and similar files — which often carry comments and trailing commas. Read
+and similar files, which often carry comments and trailing commas. Read
 the file and parse its text:
 
 ```go

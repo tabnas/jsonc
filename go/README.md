@@ -58,12 +58,12 @@ result, _ := j.Parse(`{ "debug": true, "verbose": false, }`)
 
 The docs follow the four [Diátaxis](https://diataxis.fr) quadrants:
 
-- [Tutorial](doc/tutorial.md) — a guided first parse (learning).
-- [How-to guide](doc/guide.md) — task recipes (install as a plugin, set
+- [Tutorial](doc/tutorial.md). A guided first parse (learning).
+- [How-to guide](doc/guide.md). Task recipes (install as a plugin, set
   options, handle errors, extend).
-- [Reference](doc/reference.md) — the public API, every option, and the
+- [Reference](doc/reference.md). The public API, every option, and the
   accepted syntax.
-- [Concepts](doc/concepts.md) — how the plugin works on the engine, why,
+- [Concepts](doc/concepts.md). How the plugin works on the engine, why,
   and how the Go version differs from TypeScript.
 
 ## Grammar diagram

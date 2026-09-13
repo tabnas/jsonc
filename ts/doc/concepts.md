@@ -1,7 +1,7 @@
 # Concepts
 
 Background on how the `@tabnas/jsonc` plugin works, and why it is shaped
-the way it is. This is understanding-oriented reading — for steps see the
+the way it is. This is understanding-oriented reading; for steps see the
 [tutorial](tutorial.md) and [how-to guide](guide.md), and for exact
 signatures see the [reference](reference.md).
 
@@ -10,17 +10,17 @@ signatures see the [reference](reference.md).
 `@tabnas/jsonc` does not parse anything by itself. It is a **plugin** that
 configures an existing parser:
 
-- the [`@tabnas/parser`](https://github.com/tabnas/parser) **engine** — a
+- the [`@tabnas/parser`](https://github.com/tabnas/parser) **engine**, a
   rule-based parser over a configurable, matcher-based lexer; and
 - the [`@tabnas/jsonic`](https://github.com/tabnas/jsonic) **base
-  grammar** — the relaxed-JSON rules (`val`, `map`, `list`, `pair`,
+  grammar**, the relaxed-JSON rules (`val`, `map`, `list`, `pair`,
   `elem`) that turn text into objects, arrays, and scalars.
 
 `Jsonc` runs last in the `.use(jsonic).use(Jsonc)` chain. It does **not**
 add rules of its own. Instead it tightens jsonic's lenient defaults
 toward standard JSON, switches comment lexing on or off, and installs a
 small number of extra **alternates** on rules jsonic already provides.
-That is the whole plugin — a configuration delta on a general engine.
+That is the whole plugin: a configuration delta on a general engine.
 
 ## What the plugin installs
 
@@ -41,9 +41,9 @@ JSON rather than the looser jsonic dialect.
 - an end-of-input alternate (`#ZZ`) on the `val` rule, so a document that
   is only comments or whitespace resolves to a value (`undefined`)
   instead of erroring on "no value";
-- a trailing-comma alternate on `pair` close (`#CA #CB` — comma then
+- a trailing-comma alternate on `pair` close (`#CA #CB`, comma then
   close-brace); and
-- a trailing-comma alternate on `elem` close (`#CA #CS` — comma then
+- a trailing-comma alternate on `elem` close (`#CA #CS`, comma then
   close-square).
 
 Each installed alternate is tagged with the group `jsonc` (via the
@@ -52,7 +52,7 @@ plugin's runtime options selectively include or exclude them.
 
 ## How the two options take effect
 
-The two `JsoncOptions` flags do not rewrite the grammar — they flip
+The two `JsoncOptions` flags do not rewrite the grammar: they flip
 runtime switches the grammar already exposes.
 
 `disallowComments` controls **lexing**. The plugin sets
@@ -64,7 +64,7 @@ comment matcher is simply not built, so `//` and `/* */` produce
 includes the `jsonc` and `json` rule groups, and it **excludes the
 `comma` group** unless the option is set. The trailing-comma alternates on
 `pair` and `elem` carry the `comma` tag, so excluding that group removes
-exactly those alternates — without touching the rest of the grammar. Set
+exactly those alternates, without touching the rest of the grammar. Set
 the option, and the same alternates are included again.
 
 This is why a single grammar text serves all four configurations: the
@@ -79,15 +79,15 @@ The **lexer** turns source text into tokens using independent
 **matchers** (fixed punctuation, space, line endings, strings, comments,
 numbers, …). The JSONC configuration narrows which matchers run and how:
 double-quote strings only, JSON-shaped numbers, comments on or off. The
-ignorable tokens — comments (`CM`), newlines (`LN`), and whitespace
-(`SP`) — are consumed and dropped, which is why a comment can sit between
-a key and its value.
+ignorable tokens are consumed and dropped: comments (`CM`), newlines
+(`LN`), and whitespace (`SP`). That is why a comment can sit between a
+key and its value.
 
 The **parser** consumes tokens according to the five rules. Each rule has
 an **open** and **close** phase holding alternates with at most two tokens
 of lookahead. The trailing-comma alternates are close-phase alternates
-that match "comma immediately followed by the closing bracket" — exactly
-the trailing-comma shape — and the end-of-input alternate closes off the
+that match "comma immediately followed by the closing bracket" (exactly
+the trailing-comma shape), and the end-of-input alternate closes off the
 top-level `val`. There is no backtracking search, which keeps parsing
 linear.
 
@@ -101,9 +101,9 @@ divergences per mode in `ts/test/jsontestsuite.test.ts`.
 
 **Accepted, though strict RFC 8259 rejects:**
 
-- numbers with a leading zero — `01` parses to `1`, `-01` to `-1`;
+- numbers with a leading zero: `01` parses to `1`, `-01` to `-1`;
 - a handful of malformed-number and unquoted-key shapes that the corpus
-  flags (e.g. `2.e3`, `0.e1`, a non-string key in specific positions).
+  flags (for example `2.e3`, `0.e1`, a non-string key in specific positions).
 
 **Rejected, as JSON requires:**
 
@@ -113,16 +113,16 @@ divergences per mode in `ts/test/jsontestsuite.test.ts`.
   newline (`unprintable`);
 - the non-JSON `\v` string escape, and the non-JSON structural escapes
   `\xHH` and `\u{...}` (`unexpected` / `invalid_unicode`);
-- `#` line comments — the jsonic base grammar lexes them, JSONC does not,
+- `#` line comments. The jsonic base grammar lexes them, JSONC does not,
   so the plugin disables that comment marker (`unexpected`);
 - capitalized or partial keywords (`True`, `nulllll`) and bare `-`
   (`unexpected`);
-- leading and doubled commas, e.g. `[ ,1 ]` and `[ 1,, 2 ]`;
+- leading and doubled commas, for example `[ ,1 ]` and `[ 1,, 2 ]`;
 - trailing commas, unless `allowTrailingComma` is set;
 - comments, when `disallowComments` is set.
 
 If you need byte-perfect RFC 8259 conformance, use an RFC-strict parser.
-JSONC here is "JSON, comfortably" — close to the spec, lenient where
+JSONC here is "JSON, comfortably": close to the spec, lenient where
 jsonic historically is.
 
 ## Why this design

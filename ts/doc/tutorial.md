@@ -1,4 +1,4 @@
-# Tutorial — your first JSONC parse
+# Tutorial: your first JSONC parse
 
 This walks you from nothing to a working JSONC parse, then through one
 option and one error. Follow it in order; each step builds on the last.
@@ -17,8 +17,8 @@ For a recipe-style index of individual tasks, see the
 
 ## 1. Install
 
-You need all three packages — the engine, the base grammar, and this
-plugin:
+You need all three packages: the engine, the base grammar, and this
+plugin.
 
 ```bash
 npm install @tabnas/parser @tabnas/jsonic @tabnas/jsonc
@@ -47,7 +47,7 @@ arrays become arrays, and the scalar literals (`"string"`, numbers,
 ## 3. Add comments
 
 The reason to reach for JSONC is comments. Both line (`//`) and block
-(`/* */`) comments are allowed, anywhere whitespace is — including
+(`/* */`) comments are allowed, anywhere whitespace is, including
 between a key and its value:
 
 ```js
@@ -77,7 +77,7 @@ j.parse('// just a comment')   // => undefined
 
 By default a trailing comma before `}` or `]` is a syntax error, just
 like strict JSON. Pass `{ allowTrailingComma: true }` when you install
-the plugin to permit it — handy for hand-edited config files:
+the plugin to permit it, handy for hand-edited config files:
 
 ```js
 import { Tabnas } from '@tabnas/parser'
@@ -121,7 +121,7 @@ show a user.
 
 ## Where to go next
 
-- [How-to guide](guide.md) — focused recipes for individual tasks.
-- [Reference](reference.md) — the public API, every option, and the
+- [How-to guide](guide.md). Focused recipes for individual tasks.
+- [Reference](reference.md). The public API, every option, and the
   accepted syntax.
-- [Concepts](concepts.md) — how the plugin works on the engine, and why.
+- [Concepts](concepts.md). How the plugin works on the engine, and why.

@@ -1,4 +1,4 @@
-# Tutorial — your first JSONC parse (Go)
+# Tutorial: your first JSONC parse (Go)
 
 This walks you from nothing to a working JSONC parse in Go, then through
 one option and one error. Follow it in order; each step builds on the
@@ -63,7 +63,7 @@ as `float64`; objects are `map[string]any`, arrays are `[]any`.
 ## 3. Add comments
 
 The reason to reach for JSONC is comments. Both line (`//`) and block
-(`/* */`) comments are allowed anywhere whitespace is — including between
+(`/* */`) comments are allowed anywhere whitespace is, including between
 a key and its value:
 
 ```go
@@ -106,7 +106,7 @@ The option is set once, at install time. The instance is reusable: call
 
 ## 5. Handle an error
 
-Go does not throw — `Parse` returns the error as its second value. Check
+Go does not throw: `Parse` returns the error as its second value. Check
 it, and type-assert to `*tabnasjsonic.JsonicError` for the structured fields:
 
 ```go
@@ -128,8 +128,8 @@ extract you can show a user; the struct fields are for branching in code.
 
 ## Where to go next
 
-- [How-to guide](guide.md) — focused recipes for individual tasks.
-- [Reference](reference.md) — the public API, every option, and the
+- [How-to guide](guide.md). Focused recipes for individual tasks.
+- [Reference](reference.md). The public API, every option, and the
   accepted syntax.
-- [Concepts](concepts.md) — how the plugin works on the engine, and how
+- [Concepts](concepts.md). How the plugin works on the engine, and how
   the Go version differs from TypeScript.

@@ -16,7 +16,7 @@ import { Jsonc } from '@tabnas/jsonc'
 ## Install the plugin
 
 `Jsonc` is a plugin. Build a `Tabnas` engine, install the `jsonic` base
-grammar first, then install `Jsonc`. Order matters — `Jsonc` extends the
+grammar first, then install `Jsonc`. Order matters; `Jsonc` extends the
 rules `jsonic` provides:
 
 ```js
@@ -51,7 +51,7 @@ j.parse('[ 1, 2, ]')                       // => [1, 2]
 ```
 
 Without this option, the same inputs throw. Note this permits *one*
-trailing comma, not leading or doubled commas — `[ ,1 ]` and `[ 1,, 2 ]`
+trailing comma, not leading or doubled commas; `[ ,1 ]` and `[ 1,, 2 ]`
 are always errors.
 
 ## Parse strict JSON (reject comments)
@@ -103,7 +103,7 @@ character inside a string).
 ## Parse a config file
 
 JSONC is the format VS Code uses for `tsconfig.json`, `settings.json`,
-and similar files — which often carry comments and trailing commas. Read
+and similar files, which often carry comments and trailing commas. Read
 the file and parse its text:
 
 ```js ignore

@@ -51,12 +51,12 @@ j.parse('{ "debug": true, "verbose": false, }')
 
 The docs follow the four [Diátaxis](https://diataxis.fr) quadrants:
 
-- [Tutorial](doc/tutorial.md) — a guided first parse (learning).
-- [How-to guide](doc/guide.md) — task recipes (install as a plugin, set
+- [Tutorial](doc/tutorial.md). A guided first parse (learning).
+- [How-to guide](doc/guide.md). Task recipes (install as a plugin, set
   options, handle errors, extend).
-- [Reference](doc/reference.md) — the public API, every option, and the
+- [Reference](doc/reference.md). The public API, every option, and the
   accepted syntax.
-- [Concepts](doc/concepts.md) — how the plugin works on the engine, and
+- [Concepts](doc/concepts.md). How the plugin works on the engine, and
   why.
 
 ## Grammar diagram
@@ -76,9 +76,9 @@ defined in the repository-root `jsonc-grammar.jsonic` and embedded into
 Conformance testing uses third-party corpora under MIT License:
 
 - [nst/JSONTestSuite](https://github.com/nst/JSONTestSuite) by Nicolas
-  Seriot — vendored at `test/JSONTestSuite/`.
-- [microsoft/node-jsonc-parser](https://github.com/microsoft/node-jsonc-parser) —
-  parse-level test cases ported into `test/jsonc.test.ts`.
+  Seriot. Vendored at `test/JSONTestSuite/`.
+- [microsoft/node-jsonc-parser](https://github.com/microsoft/node-jsonc-parser).
+  Parse-level test cases ported into `test/jsonc.test.ts`.
 
 See [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) for details.
 
