@@ -90,7 +90,7 @@ The grammar is defined once in the top-level
 TypeScript ([`ts/src/jsonc.ts`](ts/src/jsonc.ts)) and Go
 ([`go/jsonc.go`](go/jsonc.go)) implementations by
 [`ts/embed-grammar.js`](ts/embed-grammar.js) (run as part of `npm run
-build`). Edit the `.jsonic` file, then re-embed — never edit the embedded
+build`). Edit the `.jsonic` file, then re-embed; never edit the embedded
 copies by hand.
 
 The grammar as a railroad/syntax diagram, generated from the live grammar

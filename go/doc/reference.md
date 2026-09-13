@@ -38,7 +38,7 @@ The package exports two names:
 func Jsonc(j *tabnasjsonic.Jsonic, pluginOpts map[string]any) error
 ```
 
-The plugin function. You normally do not call it directly — pass it to
+The plugin function. You normally do not call it directly; pass it to
 `Use`, which supplies the instance and the options map:
 
 ```go
@@ -122,7 +122,7 @@ s.Parse(`[ 1, 2, null, "foo" ]`)   // []any{float64(1), float64(2), nil, "foo"},
 
 | Field | Type | Description |
 |---|---|---|
-| `Code` | `string` | Short error code, e.g. `"unexpected"`, `"unterminated_string"`. |
+| `Code` | `string` | Short error code, for example `"unexpected"`, `"unterminated_string"`. |
 | `Detail` | `string` | Human-readable detail message. |
 | `Pos` | `int` | 0-based character position in source. |
 | `Row` | `int` | 1-based line number. |
@@ -156,8 +156,8 @@ if je, ok := err.(*tabnasjsonic.JsonicError); ok {
 ## Syntax accepted
 
 JSONC is JSON ([RFC 8259](https://tools.ietf.org/html/rfc8259)) with
-comments and optional trailing commas. The grammar has five rules —
-`val`, `map`, `list`, `pair`, `elem` — visualised in the railroad diagram
+comments and optional trailing commas. The grammar has five rules
+(`val`, `map`, `list`, `pair`, `elem`) visualised in the railroad diagram
 ([../../ts/doc/grammar.svg](../../ts/doc/grammar.svg); ASCII version
 [../../ts/doc/grammar.txt](../../ts/doc/grammar.txt)). The grammar text is
 identical to the TypeScript version.
@@ -185,7 +185,7 @@ j.Parse(`[ { "a": null } ]`)                 // []any{map[string]any{"a": nil}}
 ### Strings
 
 Double-quoted only. Standard JSON escapes: `\"` `\\` `\/` `\b` `\f` `\n`
-`\r` `\t` and `\uXXXX`, and nothing else — the non-JSON `\v` escape and
+`\r` `\t` and `\uXXXX`, and nothing else: the non-JSON `\v` escape and
 the non-JSON structural escapes `\xHH` and `\u{...}` are all rejected:
 
 ```go
@@ -209,7 +209,7 @@ j.Parse(`-1.93e-19`)   // -1.93e-19
 `true`, `false`, `null`, case-sensitive. Line comments run `//` to end of
 line; block comments `/* */` do not nest. Comments are allowed anywhere
 whitespace is and are discarded. These two forms are the *only* comment
-syntax — the jsonic base grammar also lexes a `#` line comment, and the
+syntax; the jsonic base grammar also lexes a `#` line comment, and the
 plugin turns that off, so `#` is a syntax error outside a string:
 
 ```go
@@ -229,7 +229,7 @@ always rejected.
 ## Conformance note
 
 The plugin layers JSONC rules on top of jsonic, which is intentionally
-lenient in a few spots versus strict RFC 8259 (e.g. numbers with a
+lenient in a few spots versus strict RFC 8259 (for example numbers with a
 leading zero: `01` → `1`). See [concepts](concepts.md) for the full
 accepted-vs-rejected discussion. If byte-perfect RFC 8259 rejection is
 required, use an RFC-strict parser.

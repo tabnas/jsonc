@@ -31,7 +31,7 @@ import { Jsonc, VERSION } from '@tabnas/jsonc'
 import type { JsoncOptions } from '@tabnas/jsonc'
 ```
 
-There is no standalone parse function — `Jsonc` only configures an engine
+There is no standalone parse function: `Jsonc` only configures an engine
 instance you build yourself.
 
 ## The plugin
@@ -108,7 +108,7 @@ type JsoncOptions = {
 | `disallowComments` | `boolean` | `false` | Reject `//` and `/* */` comments (strict-JSON lexing). When `false` (default), comments are allowed. |
 
 Both options default to off, so the out-of-the-box behavior is "JSON plus
-comments, no trailing commas" — the common JSONC reading.
+comments, no trailing commas", the common JSONC reading.
 
 ```js
 import { Tabnas } from '@tabnas/parser'
@@ -131,7 +131,7 @@ you need the type). Useful fields:
 
 | Field | Description |
 |---|---|
-| `code` | Short error code string (e.g. `'unexpected'`, `'unterminated_string'`). |
+| `code` | Short error code string (for example `'unexpected'`, `'unterminated_string'`). |
 | `lineNumber` | 1-based line number of the error. |
 | `columnNumber` | 1-based column number of the error. |
 | `message` | Formatted, multi-line human-readable report with a source-context extract. |
@@ -143,7 +143,7 @@ Error codes you may encounter:
 | `unexpected` | No grammar alternate matched here (bad token, leading/doubled comma, capitalized keyword, bare `-`, etc.). |
 | `unterminated_string` | A `"`-quoted string has no closing quote. |
 | `unterminated_comment` | A `/* */` block comment is never closed. |
-| `unprintable` | A raw control character (code point below 32, e.g. a literal tab or newline) appears inside a string. |
+| `unprintable` | A raw control character (code point below 32, for example a literal tab or newline) appears inside a string. |
 
 ```js
 import { Tabnas } from '@tabnas/parser'
@@ -160,8 +160,8 @@ try { j.parse('"abc') } catch (err) {
 ## Syntax accepted
 
 JSONC is JSON ([RFC 8259](https://tools.ietf.org/html/rfc8259)) with
-comments and optional trailing commas. The grammar has five rules —
-`val`, `map`, `list`, `pair`, `elem` — visualised in the
+comments and optional trailing commas. The grammar has five rules
+(`val`, `map`, `list`, `pair`, `elem`) visualised in the
 [railroad diagram](grammar.svg) (ASCII version: [grammar.txt](grammar.txt)).
 
 ### Values
@@ -204,7 +204,7 @@ j.parse('[ { "a": null } ]')     // => [{ a: null }]
 ### Strings
 
 Double-quoted only. Standard JSON escapes: `\"` `\\` `\/` `\b` `\f` `\n`
-`\r` `\t` and `\uXXXX`, and nothing else — the non-JSON `\v` escape and
+`\r` `\t` and `\uXXXX`, and nothing else: the non-JSON `\v` escape and
 the non-JSON structural escapes `\xHH` and `\u{...}` are all rejected.
 Raw control characters inside a string are rejected (`unprintable`):
 
@@ -255,7 +255,7 @@ j.parse('false//hello')  // => false
 
 Line comments run `//` to end of line; block comments are `/* */` and do
 not nest. They are allowed anywhere whitespace is, and are discarded.
-These two forms are the *only* comment syntax — the jsonic base grammar
+These two forms are the *only* comment syntax; the jsonic base grammar
 also lexes a `#` line comment, and the plugin turns that off, so `#` is a
 syntax error outside a string:
 
@@ -282,8 +282,8 @@ always rejected.
 The plugin layers JSONC rules on top of jsonic, which is intentionally
 lenient in a few spots versus strict RFC 8259. The repository runs the
 [nst/JSONTestSuite](https://github.com/nst/JSONTestSuite) corpus (all 318
-`test_parsing` files) in all three option modes — strict
-(`disallowComments: true`), default, and `allowTrailingComma` — and pins
+`test_parsing` files) in all three option modes: strict
+(`disallowComments: true`), default, and `allowTrailingComma`. It pins
 the known-lenient cases per mode in `ts/test/jsontestsuite.test.ts`.
 Examples of accepted-but-non-RFC input include numbers with a leading zero
 (`01` → `1`) and a few unquoted-key shapes. If byte-perfect RFC 8259 rejection is

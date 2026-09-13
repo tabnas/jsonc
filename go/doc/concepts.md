@@ -1,7 +1,7 @@
 # Concepts (Go)
 
 Background on how the Go `jsonc` plugin works, and how it differs from the
-canonical TypeScript version. This is understanding-oriented reading — for
+canonical TypeScript version. This is understanding-oriented reading; for
 steps see the [tutorial](tutorial.md) and [how-to guide](guide.md), and
 for exact signatures see the [reference](reference.md).
 
@@ -10,16 +10,16 @@ for exact signatures see the [reference](reference.md).
 The Go `jsonc` package does not parse anything by itself. It is a
 **plugin** that configures an existing parser:
 
-- the **tabnas engine** — a rule-based parser over a configurable,
+- the **tabnas engine**, a rule-based parser over a configurable,
   matcher-based lexer (re-exported through `jsonic` in Go); and
-- the [`jsonic`](https://github.com/tabnas/jsonic) **base grammar** — the
+- the [`jsonic`](https://github.com/tabnas/jsonic) **base grammar**, the
   relaxed-JSON rules (`val`, `map`, `list`, `pair`, `elem`).
 
 `Jsonc` runs when you call `j.Use(tabnasjsonc.Jsonc, opts)`. It does **not** add
 rules of its own. It tightens jsonic's lenient defaults toward standard
 JSON, switches comment lexing on or off, and installs a small number of
 extra **alternates** on rules jsonic already provides. That is the whole
-plugin — a configuration delta on a general engine.
+plugin: a configuration delta on a general engine.
 
 ## What the plugin installs
 
@@ -39,9 +39,9 @@ The result reads like JSON rather than the looser jsonic dialect.
 
 - an end-of-input alternate (`#ZZ`) on `val`, so comment-only or
   whitespace-only input resolves to `nil` instead of erroring;
-- a trailing-comma alternate on `pair` close (`#CA #CB` — comma then
+- a trailing-comma alternate on `pair` close (`#CA #CB`, comma then
   close-brace); and
-- a trailing-comma alternate on `elem` close (`#CA #CS` — comma then
+- a trailing-comma alternate on `elem` close (`#CA #CS`, comma then
   close-square).
 
 Each installed alternate is tagged with the group `jsonc` (via the
@@ -51,7 +51,7 @@ them.
 
 ## How the two options take effect
 
-The two options do not rewrite the grammar — they flip runtime switches
+The two options do not rewrite the grammar: they flip runtime switches
 the grammar already exposes.
 
 `disallowComments` controls **lexing**: the plugin sets
@@ -69,7 +69,7 @@ This is why one grammar text serves all four configurations.
 A parse runs in two stages inherited from the engine. The **lexer** turns
 text into tokens using independent matchers (the JSONC config narrows
 these to double-quote strings, JSON-shaped numbers, comments on/off). The
-ignorable tokens — comments, newlines, whitespace — are dropped, which is
+ignorable tokens (comments, newlines, whitespace) are dropped, which is
 why a comment can sit between a key and its value. The **parser** consumes
 tokens with at most two tokens of lookahead per alternate; the
 trailing-comma alternates match "comma then closing bracket", and the
@@ -148,7 +148,7 @@ The error `Code` is the same string in both (`unterminated_string`,
 
 None currently. The two runtimes accept and reject the same documents and
 report the same error `Code` for the same failure. Earlier releases noted
-two divergences that no longer exist — Go accepting the non-JSON `\v`
+two divergences that no longer exist: Go accepting the non-JSON `\v`
 string escape, and Go reporting `unterminated_string` where TS reported
 `unprintable` for a raw control character in a string. Both are now
 pinned as shared fixtures in [`test/spec/strings.tsv`](../../test/spec/strings.tsv),
