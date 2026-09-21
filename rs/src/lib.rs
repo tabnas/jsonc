@@ -187,18 +187,30 @@ impl JsoncOptions {
 /// This port's one deliberate departure from the canonical TypeScript
 /// plugin, which sets no limit. The Rust engine's cost per rule grows
 /// with the height of its rule stack, so a parse costs time quadratic in
-/// the nesting depth: a document 1,600 levels deep takes seconds in a
-/// debug build, and the RFC 8259 corpus's `n_structure_100000_opening_arrays`
-/// would take hours to reject. The engine's parse budget stops such a
-/// document at the limit with the `cancel` code instead.
+/// the nesting depth: measured in a debug build, 100 levels cost 0.07 s
+/// and 500 levels 1.6 s, so the RFC 8259 corpus's
+/// `n_structure_100000_opening_arrays` would take hours to reject. The
+/// engine's parse budget stops such a document at the limit with the
+/// `cancel` code instead.
 ///
-/// The number is generous for the format. JSONC is the dialect of editor
-/// and tool configuration, which nests a handful of levels, and the
-/// conformance pin in `test/known-lenient.json` requires the corpus's
-/// 500-level `i_structure_500_nested_arrays` to be ACCEPTED, so the limit
-/// stands well above that. Recorded in `DIVERGENCE.md` at the repository
-/// root; `tests/jsonc_test.rs` measures the boundary.
-pub const DEPTH_LIMIT: usize = 1000;
+/// The limit is also what keeps a deep document from ending the process.
+/// [`Value::to_json`] RECURSES once per level, about 2.2 KiB of stack per
+/// level in a debug build, and a thread created with the standard library
+/// default gets 2 MiB: measured, that stack aborts somewhere between 920
+/// and 950 levels, and an abort cannot be caught. So the limit has to sit
+/// below what the smallest realistic caller can walk, not merely below
+/// what the engine can parse.
+///
+/// That leaves a narrow band, and 512 sits in it. The conformance pin in
+/// `test/known-lenient.json` requires the corpus's 500-level
+/// `i_structure_500_nested_arrays` to be ACCEPTED, which is the floor;
+/// the stack is the ceiling. JSONC is the dialect of editor and tool
+/// configuration, which nests a handful of levels, so the band is
+/// generous for the format even though it is narrow in the abstract.
+/// Recorded in `DIVERGENCE.md` at the repository root;
+/// `tests/jsonc_test.rs` measures both the parse boundary and the walk of
+/// a limit-deep value on a 2 MiB stack.
+pub const DEPTH_LIMIT: usize = 512;
 
 /// How many containers are open at this point in the parse.
 ///

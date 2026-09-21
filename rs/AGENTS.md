@@ -84,22 +84,37 @@ budget is this port's own (below).
 
 The Rust engine's cost per iteration grows with the height of its rule
 stack, so a parse costs time quadratic in the nesting depth. Measured
-in a debug build on this crate: closed arrays 400 deep take 0.7 s, 800
-deep 2.7 s, 1,600 deep 11.7 s, 3,200 deep 54 s; flat input scales
-linearly. The RFC corpus carries `n_structure_100000_opening_arrays`
-(100,000 levels) and `n_structure_open_array_object` (50,000), which
-would take hours each and left the corpus test spinning.
+in a debug build on this crate, at depths the shipped limit still lets
+you reproduce: closed arrays 100 deep take 0.07 s, 200 deep 0.30 s, 400
+deep 1.02 s, 500 deep 1.61 s, a fourfold cost for each doubling; flat
+input scales linearly. Extrapolate that curve and the RFC corpus's
+`n_structure_100000_opening_arrays` (100,000 levels) and
+`n_structure_open_array_object` (50,000) would take hours each, which is
+what left the corpus test spinning before the limit existed.
 
-So `jsonc` sets a parse budget that cancels at `DEPTH_LIMIT` (1,000)
+Time is only half of it. `Value::to_json` recurses once per level, and
+so does dropping the `serde_json::Value` it builds. Measured in a debug
+build, that costs about 2.2 KiB of stack per level, so a thread with
+the standard library's default 2 MiB stack aborts between 920 and 950
+levels. A limit of 1,000 would therefore be reachable as a process
+abort: parse a 1,000-level document on a worker thread, call `to_json`
+on the result, and the runtime kills the process, which no caller can
+catch.
+
+So `jsonc` sets a parse budget that cancels at `DEPTH_LIMIT` (512)
 containers, counted from the rule names the way `tabnas_json` counts
-its own limit. The number has to sit above 500, because
-`test/known-lenient.json` pins `i_structure_500_nested_arrays` as
-ACCEPTED in every mode, and the corpus test would otherwise go red on
-the `i_*` set. It is recorded in `../DIVERGENCE.md`;
-`nesting_deeper_than_the_limit_is_cancelled` measures the boundary from
-every construction path. Do not remove it to "match TypeScript": the
-fix belongs in the engine, and until then the corpus test cannot finish
-without it.
+its own limit. The band is narrow and both walls are measured: the
+floor is 500, because `test/known-lenient.json` pins
+`i_structure_500_nested_arrays` as ACCEPTED in every mode and the
+corpus test would otherwise go red on the `i_*` set; the ceiling is the
+2 MiB stack above. It is recorded in `../DIVERGENCE.md`;
+`nesting_deeper_than_the_limit_is_cancelled` measures the parse
+boundary from every construction path, and
+`a_limit_deep_value_walks_on_a_default_thread_stack` measures the other
+wall by doing the walk on a 2 MiB thread. Do not remove the limit to
+"match TypeScript" and do not raise it: the repair belongs in the
+engine, and until then the corpus test cannot finish and the stack
+cannot be trusted without it.
 
 ## A trivia-only document is `Null`
 
@@ -109,6 +124,10 @@ here where TypeScript returns `undefined`. The fixtures spell the case
 `UNDEFINED`; `parity_test.rs` reads that cell as `null`, as the Go
 runner reads it as `nil`. Recorded in `../DIVERGENCE.md`. A doctest
 that asserts `is_undefined()` on such a parse fails.
+
+`trivia` in `jsonc_test.rs` compares the flattened JSON and so cannot
+see this case at all; `a_trivia_only_document_is_null_and_not_undefined`
+compares the `Value` and is what pins it.
 
 ## The fixture runner
 

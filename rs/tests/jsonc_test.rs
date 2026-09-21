@@ -174,6 +174,36 @@ fn trivia() {
     }
 }
 
+/// The other recorded divergence, measured on the VALUE rather than on
+/// its JSON.
+///
+/// `trivia` above compares the flattened JSON, where a top-level
+/// undefined and a null are the same `null`, so it cannot tell the case
+/// apart and does not pin it. The TypeScript plugin returns `undefined`
+/// for a document that holds only whitespace and comments, and tells that
+/// apart from a document whose value is `null`; the Rust engine folds a
+/// top-level undefined into `Value::Null` at the end of every parse, so
+/// the two are one value here. Recorded in ../../DIVERGENCE.md.
+#[test]
+fn a_trivia_only_document_is_null_and_not_undefined() {
+    for src in ["// only a comment", "/* c */", "   \n  ", ""] {
+        if src.is_empty() {
+            // Empty input is a parse error in every runtime, and is here
+            // only to say that the case below is about trivia, not about
+            // the absence of input.
+            assert_eq!(parse(src).unwrap_err().code, "unexpected");
+            continue;
+        }
+        let value = parse(src).expect("trivia parses");
+        assert_eq!(value, Value::Null, "{src:?}");
+        assert!(!value.is_undefined(), "{src:?}");
+    }
+
+    // A document whose value IS null gives the same thing, which is what
+    // makes this a divergence rather than a representation detail.
+    assert_eq!(parse("null").expect("parses"), Value::Null);
+}
+
 #[test]
 fn literals() {
     assert_eq!(ok("true"), json!(true));
@@ -623,8 +653,8 @@ fn nesting_deeper_than_the_limit_is_cancelled() {
 
     // The by-hand path carries the limit as well as `make` (the
     // `use_plugin` path, which `shared()` and `make_with` both take).
-    // Each 1,000-level parse costs seconds in a debug build, so this is
-    // the one extra construction checked at the boundary.
+    // Each limit-deep parse costs a second or more in a debug build, so
+    // this is the one extra construction checked at the boundary.
     let mut by_hand = Tabnas::new();
     tabnas_jsonic::jsonic(&mut by_hand).expect("jsonic installs");
     jsonc(&mut by_hand, &JsoncOptions::new()).expect("jsonc installs");
@@ -632,6 +662,53 @@ fn nesting_deeper_than_the_limit_is_cancelled() {
         by_hand.parse(&arrays(DEPTH_LIMIT + 1)).unwrap_err().code,
         "cancel"
     );
+}
+
+/// The other wall the limit sits between: a value at the limit must be
+/// walkable by the caller that receives it.
+///
+/// `Value::to_json` recurses once per level, and so does dropping the
+/// `serde_json::Value` it returns, so a deep enough value overflows the
+/// stack rather than raising anything a caller can catch. A thread built
+/// with the standard library's default 2 MiB stack is the smallest a
+/// realistic caller uses, and libtest's own threads are larger, so the
+/// walk is done on a thread of exactly that size here. Measured in a
+/// debug build, the wall is between 920 and 950 levels; `DEPTH_LIMIT`
+/// stands below it, and this test is what says so.
+///
+/// A regression aborts the process instead of failing the assertion.
+/// That is the nature of a stack overflow, and it is still the loudest
+/// signal available: the test binary dies naming the overflow.
+#[test]
+fn a_limit_deep_value_walks_on_a_default_thread_stack() {
+    use tabnas_jsonc::DEPTH_LIMIT;
+
+    // Measured on this crate in a debug build: a 920-level value walks on
+    // a 2 MiB stack, a 950-level one aborts the process. Bounding the
+    // constant against that wall first turns the likely regression,
+    // raising the limit, into a failing assertion instead of an abort.
+    let limit = DEPTH_LIMIT;
+    assert!(
+        limit <= 920,
+        "DEPTH_LIMIT {limit} is at or above the measured 2 MiB stack wall"
+    );
+
+    let walked = std::thread::Builder::new()
+        .stack_size(2 * 1024 * 1024)
+        .spawn(|| {
+            let src = format!("{}1{}", "[".repeat(DEPTH_LIMIT), "]".repeat(DEPTH_LIMIT));
+            let value = make().parse(&src).expect("the limit itself parses");
+            let json = value.to_json();
+            let rendered = value.to_string();
+            drop(json);
+            drop(value);
+            rendered.len()
+        })
+        .expect("the thread spawns")
+        .join()
+        .expect("no overflow and no panic walking a limit-deep value");
+
+    assert_eq!(walked, 2 * DEPTH_LIMIT + 1);
 }
 
 /// `parse` shares one built instance across threads: `Tabnas` is

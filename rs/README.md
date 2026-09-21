@@ -110,11 +110,13 @@ three runtimes to that. What differs is the shape of the API and those
 two points:
 
 - **Nesting is bounded.** Objects and arrays may nest `DEPTH_LIMIT`
-  (1,000) levels; the next level is rejected with the `cancel` code.
+  (512) levels; the next level is rejected with the `cancel` code.
   The TypeScript plugin sets no limit. The Rust engine's cost grows
-  with the square of the nesting depth, so the limit is what keeps a
-  hostile document from running for hours, and it stands well above
-  the 500 levels the conformance pin requires to be accepted.
+  with the square of the nesting depth, and walking a parsed value
+  costs one stack frame per level, so the limit is what keeps a hostile
+  document from running for hours or from exhausting the stack of the
+  thread that reads the result. It stands above the 500 levels the
+  conformance pin requires to be accepted.
 - **A trivia-only document is `null`.** Whitespace and comments alone
   have no value, which TypeScript returns as `undefined`. The Rust
   engine folds a top-level undefined into `Value::Null` at the end of
