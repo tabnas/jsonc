@@ -30,6 +30,7 @@ on:
       - 'jsonc-grammar.jsonic'
       - 'ts/src/jsonc.ts'
       - 'ts/package.json'
+      - 'ts/embed-grammar.js'
       - 'ci/rust/**'
       - '.github/workflows/rust.yml'
   pull_request:
@@ -41,6 +42,7 @@ on:
       - 'jsonc-grammar.jsonic'
       - 'ts/src/jsonc.ts'
       - 'ts/package.json'
+      - 'ts/embed-grammar.js'
       - 'ci/rust/**'
       - '.github/workflows/rust.yml'
   workflow_dispatch:

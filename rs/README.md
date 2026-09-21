@@ -101,12 +101,13 @@ shared fixture runner.
 
 ## Differences from the canonical TypeScript
 
-Every document the TypeScript plugin accepts or rejects, this crate
-accepts or rejects with the same error code, and the shared fixtures in
-[`../test/spec`](../test/spec) and the RFC 8259 corpus in
-[`../test/JSONTestSuite`](../test/JSONTestSuite) hold all three
-runtimes to that. What differs is the shape of the API and two points
-recorded in [`../DIVERGENCE.md`](../DIVERGENCE.md):
+Within the two limits recorded in [`../DIVERGENCE.md`](../DIVERGENCE.md)
+and listed first below, every document the TypeScript plugin accepts or
+rejects, this crate accepts or rejects with the same error code, and the
+shared fixtures in [`../test/spec`](../test/spec) and the RFC 8259
+corpus in [`../test/JSONTestSuite`](../test/JSONTestSuite) hold all
+three runtimes to that. What differs is the shape of the API and those
+two points:
 
 - **Nesting is bounded.** Objects and arrays may nest `DEPTH_LIMIT`
   (1,000) levels; the next level is rejected with the `cancel` code.
