@@ -1,0 +1,28 @@
+[package]
+name = "tabnas-jsonc"
+version = "0.5.6"
+edition = "2021"
+rust-version = "1.85"
+license = "MIT"
+description = "JSONC (JSON with comments) grammar plugin for the tabnas parsing engine, over jsonic"
+repository = "https://github.com/tabnas/jsonc"
+
+[lib]
+name = "tabnas_jsonc"
+path = "src/lib.rs"
+
+[dependencies]
+# The engine and the jsonic base grammar are consumed as SIBLING
+# CHECKOUTS, the standard tabnas development model: clone
+# https://github.com/tabnas/parser and https://github.com/tabnas/jsonic
+# next to this repo. Neither crate is published, so there is no registry
+# version to fall back on. jsonic itself takes https://github.com/tabnas/json
+# the same way, so that checkout is needed too.
+tabnas = { path = "../../parser/rs" }
+tabnas-jsonic = { path = "../../jsonic/rs" }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+
+[dev-dependencies]
+# The shared fixture loader and runner: one loader in three languages, so
+# the rows mean the same thing in every runtime.
+tabnas-support = { path = "../../support/rs", features = ["serde_json"] }

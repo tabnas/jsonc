@@ -18,8 +18,8 @@ alts on `pair`/`elem`) and tightens the lexer/number/string/map options
 toward standard JSON. Two plugin options switch behavior: `disallowComments`
 (strict JSON, no comments) and `allowTrailingComma`.
 
-There are two implementations that must behave identically — TypeScript
-(canonical) and a Go port.
+There are three implementations that must behave identically — TypeScript
+(canonical), a Go port and a Rust port.
 
 ## Repository map
 
@@ -27,8 +27,10 @@ There are two implementations that must behave identically — TypeScript
 |---|---|
 | [`ts/`](ts/) | **Canonical** TypeScript implementation — the `@tabnas/jsonc` package. Plugin in `src/jsonc.ts`. Imports the engine as `@tabnas/parser` and the base grammar as `@tabnas/jsonic`. |
 | [`go/`](go/) | Go port — `github.com/tabnas/jsonc/go`. Plugin in `jsonc.go`. Imports `github.com/tabnas/jsonic/go` (jsonic re-exports the engine API in Go). |
-| [`jsonc-grammar.jsonic`](jsonc-grammar.jsonic) | The grammar, **source of truth for both runtimes**. Embedded verbatim into both source files. |
-| [`ts/embed-grammar.js`](ts/embed-grammar.js) | Embeds the grammar into `ts/src/jsonc.ts` AND `go/jsonc.go`. |
+| [`rs/`](rs/) | Rust port — the `tabnas-jsonc` crate (library `tabnas_jsonc`). Plugin in `src/lib.rs`: `jsonc` / `plugin()`, the typed `JsoncOptions`, `make` / `make_with` / `parse`, and a nesting limit (`DEPTH_LIMIT`) the other runtimes do not have (see `DIVERGENCE.md`). Depends on sibling `tabnas/parser`, `tabnas/jsonic` (and through it `tabnas/json`) and, tests only, `tabnas/support` checkouts via Cargo `path` dependencies. Library only: no CLI. See [`rs/AGENTS.md`](rs/AGENTS.md). |
+| [`DIVERGENCE.md`](DIVERGENCE.md) | Where a port produces a different result for the same input. TS and Go have none; the Rust port has two engine-rooted ones, both pinned by its tests. |
+| [`jsonc-grammar.jsonic`](jsonc-grammar.jsonic) | The grammar, **source of truth for all three runtimes**. Embedded verbatim into each source file. |
+| [`ts/embed-grammar.js`](ts/embed-grammar.js) | Embeds the grammar into `ts/src/jsonc.ts`, `go/jsonc.go` AND `rs/src/lib.rs`. |
 | [`test/JSONTestSuite/`](test/JSONTestSuite/) | Vendored [nst/JSONTestSuite](https://github.com/nst/JSONTestSuite) RFC-8259 corpus (`test_parsing/*.json`), run by **both** runtimes. Upstream `LICENSE` kept in place. |
 | [`test/known-lenient.json`](test/known-lenient.json) | The RFC-8259 leniency pin for that corpus, read by both runtimes. One written reason per entry; pinned exactly. |
 | [`test/fetch-conformance-suites.sh`](test/fetch-conformance-suites.sh) | Fetches the pinned upstream checkouts the fixtures are *derived* from into `test/vendor/` (gitignored). No test reads `test/vendor/`; run it only to re-derive or re-audit fixtures. |
@@ -57,6 +59,14 @@ publish tagged releases):
   directly. The other replaces in `go.mod` (`parser`, `json`, `debug`)
   cover the **indirect** modules jsonic pulls in transitively; jsonc has
   no direct dependency on them.
+- Rust: `rs/Cargo.toml` takes `tabnas = { path = "../../parser/rs" }`,
+  `tabnas-jsonic = { path = "../../jsonic/rs" }` (which itself takes
+  `../../json/rs`) and, as a dev-dependency,
+  `tabnas-support = { path = "../../support/rs" }` (the shared fixture
+  loader and runner). None is published, so the sibling checkout is the
+  only resolution; `rs/Cargo.lock` is committed and `ci/rust/run.sh`
+  holds it to the manifest, exempting only the siblings' own version
+  entries.
 
 Clone the siblings (`parser`, `jsonic`, plus `debug`/`railroad` for the
 optional test and diagram) next to this repo and build their TS first. CI
@@ -95,8 +105,9 @@ see the true result.
 
 ## The grammar is embedded — never hand-edit the embedded block
 
-`jsonc-grammar.jsonic` is embedded verbatim into **both**
-`ts/src/jsonc.ts` and `go/jsonc.go`, between these markers:
+`jsonc-grammar.jsonic` is embedded verbatim into **all three** of
+`ts/src/jsonc.ts`, `go/jsonc.go` and `rs/src/lib.rs`, between these
+markers:
 
 ```
 // --- BEGIN EMBEDDED jsonc-grammar.jsonic ---
@@ -113,8 +124,14 @@ Go side embeds it as a raw string. Note the TS embedder also escapes `\`,
 and `go/jsonc.go`.)
 
 ```bash
-cd ts && node embed-grammar.js   # writes into ts/src/jsonc.ts AND go/jsonc.go
+cd ts && node embed-grammar.js   # writes into ts/src/jsonc.ts, go/jsonc.go AND rs/src/lib.rs
 ```
+
+The Rust embed is a `r##"..."##` raw string, so the text goes in
+verbatim as it does in Go; the script skips the Rust target when
+`rs/src/lib.rs` is absent. `rs/tests/jsonc_test.rs` compares the
+embedded text against the file on disk and against the Go embed, so a
+hand edit between the markers fails there.
 
 `npm run build` runs the embed step first (`node embed-grammar.js && tsc
 --build src test`), so a normal TS build keeps both files in sync.
@@ -187,8 +204,28 @@ go test -v ./...       # jsonc_test.go (unit, mirrors the TS unit cases),
                        # perf_test.go, version_test.go
 ```
 
-The repo-root [`Makefile`](Makefile) wraps both halves: `make build|test`
-run the TS and Go sides, and `make publish-go V=x.y.z` injects `V` into the
+Rust (from `rs/`; needs `../../parser`, `../../jsonic`, `../../json` and
+`../../support` checked out):
+
+```bash
+cargo build --all-targets
+cargo test --all-targets && cargo test --doc   # parity_test.rs (the shared
+                       # fixtures), jsontestsuite_test.rs (the vendored RFC
+                       # corpus, three modes, same pin), jsonc_test.rs
+                       # (the Go unit cases plus the nesting boundary),
+                       # perf_test.rs, version_test.rs, and the README's
+                       # examples as doctests
+cargo clippy --all-targets --all-features -- -D warnings
+```
+
+`make test-rs` is the fast Rust loop and `ci/rust/run.sh` the full gate
+(formatting, the lockfile check, the MSRV pin). `make version-rs V=x.y.z`
+rewrites the two Rust version sites (`rs/Cargo.toml`, `rs/src/lib.rs`)
+and the lockfile entry, without committing, because the crate is not
+published. `rs/AGENTS.md` has the crate-specific hazards.
+
+The repo-root [`Makefile`](Makefile) wraps all three: `make build|test`
+run the TS, Go and Rust sides, and `make publish-go V=x.y.z` injects `V` into the
 `const VERSION` in `go/jsonc.go`, commits, and tags `go/vX.Y.Z`.
 `make publish-ts` publishes the TS package at its `package.json`
 version. `ts/Makefile` has the same targets scoped to the package, plus
@@ -229,17 +266,19 @@ around it; the wiring is fixed instead, and
 
 What "correct" means here, in order of authority:
 
-1. **The shared fixtures pass in BOTH runtimes.** `test/spec/*.tsv` is the
-   parity contract — a row green in one runtime and red in the other is a
-   failure, not a discrepancy.
-2. **The JSONTestSuite pins hold, in all three option modes.** Both
+1. **The shared fixtures pass in ALL THREE runtimes.** `test/spec/*.tsv`
+   is the parity contract — a row green in one runtime and red in another
+   is a failure, not a discrepancy.
+2. **The JSONTestSuite pins hold, in all three option modes.** All three
    runtimes classify the vendored corpus against
    `test/known-lenient.json`; a pinned set that grows **or** shrinks is a
    failure, and a missing corpus fails rather than skips.
-3. **The three version constants agree** — `ts/package.json` `"version"`,
-   `const VERSION` in `ts/src/jsonc.ts`, and `const VERSION` in
-   `go/jsonc.go`. `ts/test/version.test.ts` and `go/version_test.go` fail
-   the build if either drifts.
+3. **The version constants agree** — `ts/package.json` `"version"`,
+   `const VERSION` in `ts/src/jsonc.ts`, `const VERSION` in
+   `go/jsonc.go`, and `version` in `rs/Cargo.toml` with
+   `pub const VERSION` in `rs/src/lib.rs`. `ts/test/version.test.ts`,
+   `go/version_test.go` and `rs/tests/version_test.rs` fail the build if
+   any drifts.
 4. **The embedded grammar matches its source.** If you changed
    `jsonc-grammar.jsonic`, run the embed step (`cd ts && node
    embed-grammar.js`, or `npm run build`, which embeds first) — never
@@ -268,9 +307,12 @@ accepts the publish. Pushing a tag by hand is the orchestrator's path
 
 The steps, in order:
 
-1. Bump all **three** version sites together — `ts/package.json`, `VERSION`
-   in `ts/src/jsonc.ts` and `const VERSION` in `go/jsonc.go`. Drift is
-   caught by `ts/test/version.test.ts` and `go/version_test.go`.
+1. Bump all **five** version sites together — `ts/package.json`, `VERSION`
+   in `ts/src/jsonc.ts`, `const VERSION` in `go/jsonc.go`, `version` in
+   `rs/Cargo.toml` and `pub const VERSION` in `rs/src/lib.rs` (plus the
+   crate's entry in `rs/Cargo.lock`; `make version-rs V=x.y.z` does the
+   Rust three). Drift is caught by `ts/test/version.test.ts`,
+   `go/version_test.go` and `rs/tests/version_test.rs`.
 2. Verify against the **published** dependencies rather than your checkout.
    The release runner installs fresh from the registry; a working tree
    usually does not, so reproduce that before believing anything:
@@ -521,7 +563,8 @@ text.
 
 ## JSONTestSuite conformance (TS + Go)
 
-`ts/test/jsontestsuite.test.ts` and `go/jsontestsuite_test.go` run the
+`ts/test/jsontestsuite.test.ts`, `go/jsontestsuite_test.go` and
+`rs/tests/jsontestsuite_test.rs` run the
 vendored nst/JSONTestSuite corpus (all 318 `test_parsing/*.json` files: 95
 `y_*`, 188 `n_*`, 35 `i_*`) against the plugin in **all three option modes** —
 strict (`disallowComments: true`), default (comments on), and

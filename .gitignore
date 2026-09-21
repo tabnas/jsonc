@@ -35,6 +35,9 @@ yarn.lock
 # Go
 go/vendor/
 
+# Rust
+target/
+
 # Pinned upstream checkouts the conformance fixtures are DERIVED from
 # (microsoft/node-jsonc-parser, nst/JSONTestSuite) plus the derived
 # corpus.json. Fetched on demand by test/fetch-conformance-suites.sh; never

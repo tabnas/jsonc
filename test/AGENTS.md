@@ -4,16 +4,17 @@ This directory holds two kinds of shared, cross-runtime test data:
 
 - `spec/*.tsv` — the input → output conformance fixtures described below.
 - `known-lenient.json` — the RFC 8259 leniency pin for the vendored
-  `JSONTestSuite/` corpus, read by BOTH `ts/test/jsontestsuite.test.ts` and
-  `go/jsontestsuite_test.go`. It is **not** a skip list: it records, with one
+  `JSONTestSuite/` corpus, read by ALL of `ts/test/jsontestsuite.test.ts`,
+  `go/jsontestsuite_test.go` and `rs/tests/jsontestsuite_test.rs`. It is **not** a skip list: it records, with one
   written reason per entry, every case where jsonc deliberately diverges from
   strict RFC 8259, and it is pinned exactly so a lenience cannot be gained or
   lost unnoticed. Change an entry only together with the behaviour change that
   justifies it; never re-pin to silence a red run.
 
-`spec/*.tsv` holds the cross-runtime conformance fixtures. Both runtimes
-auto-discover and run **every** file in this directory, so a change here
-affects TypeScript and Go together — edit with that in mind.
+`spec/*.tsv` holds the cross-runtime conformance fixtures. All three
+runtimes auto-discover and run **every** file in this directory, so a
+change here affects TypeScript, Go and Rust together — edit with that in
+mind.
 
 ## Format
 
@@ -40,16 +41,21 @@ comparison.
 
 - TypeScript: `ts/test/parity.test.ts` — `makeRunner(...).dir(...)`.
 - Go: `go/parity_test.go` — `support.Runner{...}.Dir(t, dir)`.
+- Rust: `rs/tests/parity_test.rs` — `Runner::new_with_row(...).dir(dir)`
+  from `tabnas_support`, the shared loader's Rust half: a fresh parser
+  per row from the `opts` cell, the same jsonc escape codec, and the
+  `UNDEFINED` cell read as `null` (the Rust engine folds a top-level
+  undefined into null, as Go's `nil` does; see `DIVERGENCE.md`).
 
-Both are a dozen lines holding only what is specific to jsonc: how to
+Each is a dozen lines holding only what is specific to jsonc: how to
 build the parser for a row's options. Everything else — finding
 `test/spec`, reading the file, decoding escapes, the `ERROR:` contract,
 the comparison, the `<file>:<line>` in a failure message — comes from
 [`@tabnas/support`](https://github.com/tabnas/support) and its Go half, so
 the two loaders cannot drift from each other either.
 
-Both discover files by directory listing: adding a `.tsv` here runs it in
-both runtimes without touching either runner. An empty fixture, and a spec
+All three discover files by directory listing: adding a `.tsv` here runs
+it in every runtime without touching any runner. An empty fixture, and a spec
 directory with no fixtures in it, both **fail** — a runner that reports
 green having run nothing is indistinguishable from coverage that was never
 there.
@@ -62,5 +68,6 @@ there.
 - TypeScript is canonical. If the two runtimes disagree, the TS behaviour is
   the expected value — unless Go has exposed a genuine TS defect, in which
   case fix TS first and pin the corrected behaviour here.
-- A new fixture must pass in BOTH runtimes: run `go test ./...` (from `go/`)
-  and `npm test` (from `ts/`) before considering it done.
+- A new fixture must pass in ALL THREE runtimes: run `go test ./...` (from
+  `go/`), `npm test` (from `ts/`) and `cargo test --all-targets` (from
+  `rs/`) before considering it done.
