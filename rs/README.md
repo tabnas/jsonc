@@ -145,7 +145,7 @@ cargo test --all-targets && cargo test --doc
 ```
 
 Or, from the repository root, `make test-rs`. For what CI would say,
-including formatting and the lockfile check, run `ci/rust/run.sh`.
+including formatting and the `Cargo.lock` check, run `ci/rust/run.sh`.
 
 The suite runs every shared `../test/spec/*.tsv` fixture, the same files
 the TypeScript and Go suites run, through the shared runner with a

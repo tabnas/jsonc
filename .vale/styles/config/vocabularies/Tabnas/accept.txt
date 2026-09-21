@@ -12,6 +12,7 @@
 [Cc]onfig
 [Ee]rroring
 [Ff]ootgun
+[Jj]son
 [Jj]sonc
 [Jj]sonic
 [Ll]exed
