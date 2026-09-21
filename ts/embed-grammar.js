@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Embed jsonc-grammar.jsonic into TypeScript and Go source files.
+// Embed jsonc-grammar.jsonic into the TypeScript, Go and Rust source files.
 // Run via: npm run embed  (or:  node embed-grammar.js)
 
 const fs = require('fs')
@@ -9,6 +9,7 @@ const path = require('path')
 const GRAMMAR_FILE = path.join(__dirname, '..', 'jsonc-grammar.jsonic')
 const TS_FILE = path.join(__dirname, 'src', 'jsonc.ts')
 const GO_FILE = path.join(__dirname, '..', 'go', 'jsonc.go')
+const RS_FILE = path.join(__dirname, '..', 'rs', 'src', 'lib.rs')
 
 const BEGIN = '// --- BEGIN EMBEDDED jsonc-grammar.jsonic ---'
 const END = '// --- END EMBEDDED jsonc-grammar.jsonic ---'
@@ -72,5 +73,41 @@ function embedGo() {
   console.log('Embedded grammar into', GO_FILE)
 }
 
+// --- Rust embedding ---
+function embedRust() {
+  let src = fs.readFileSync(RS_FILE, 'utf8')
+  const startIdx = src.indexOf(BEGIN)
+  const endIdx = src.indexOf(END)
+  if (startIdx === -1 || endIdx === -1) {
+    console.error('Rust markers not found in', RS_FILE)
+    process.exit(1)
+  }
+
+  // A Rust raw string has no escapes, so the grammar goes in verbatim,
+  // exactly as it does in Go. The hash count has to clear the longest
+  // `"#...` run the text contains; the grammar quotes `"` in `chars: '"'`
+  // and names tokens with `#`, so two hashes is the floor.
+  if (grammar.includes('"##')) {
+    console.error('Grammar contains `"##`, incompatible with the r## raw string')
+    process.exit(1)
+  }
+
+  const replacement =
+    BEGIN +
+    '\nconst GRAMMAR_TEXT: &str = r##"\n' +
+    grammar +
+    '"##;\n' +
+    END
+
+  src = src.substring(0, startIdx) + replacement + src.substring(endIdx + END.length)
+  fs.writeFileSync(RS_FILE, src)
+  console.log('Embedded grammar into', RS_FILE)
+}
+
 embedTS()
 embedGo()
+if (fs.existsSync(RS_FILE)) {
+  embedRust()
+} else {
+  console.log('No Rust source at', RS_FILE, '- skipping')
+}

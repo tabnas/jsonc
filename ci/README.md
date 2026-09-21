@@ -21,3 +21,13 @@ This directory exists because session credentials cannot write
   suite already runs the other half of the gate
   (`ts/test/docs.test.js`), so promoting this adds the spelling and
   Google-convention arm rather than the whole gate.
+
+- **`workflows/rust.yml`**, the Rust gate: `ci/rust/run.sh` (formatting,
+  build, the shared fixtures, the vendored RFC 8259 corpus, doctests,
+  clippy, and a lockfile check that exempts only the sibling crates'
+  versions) on the MSRV pinned in `rs/Cargo.toml`. It clones
+  `tabnas/parser`, `tabnas/json`, `tabnas/jsonic` and `tabnas/support`
+  beside the checkout, because the crate takes the engine, jsonic and
+  (for tests) support as path dependencies, jsonic takes json the same
+  way, and none is published. `make test-rs` is the fast local loop;
+  the script is what CI would run.

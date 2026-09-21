@@ -11,8 +11,8 @@ A JSONC (JSON-with-comments) grammar plugin for the
 [tabnas](https://github.com/tabnas/parser) parsing engine. It teaches the
 [jsonic](https://github.com/tabnas/jsonic) relaxed-JSON grammar to accept
 the JSONC dialect: standard JSON plus single-line (`//`) and block
-(`/* */`) comments, with optional trailing commas. Available for both
-TypeScript/JavaScript and Go.
+(`/* */`) comments, with optional trailing commas. Available for
+TypeScript/JavaScript, Go and Rust.
 
 Docs, guides, the error reference and the playground: **[tabnas.dev](https://tabnas.dev)**.
 
@@ -22,6 +22,7 @@ This repository contains:
 |---|---|
 | [`ts/`](ts/) | TypeScript / JavaScript implementation (canonical). |
 | [`go/`](go/) | Go port. |
+| [`rs/`](rs/) | Rust port, crate `tabnas-jsonc`. See [`rs/README.md`](rs/README.md). |
 
 ## Install
 
@@ -32,6 +33,12 @@ npm install @tabnas/parser @tabnas/jsonic @tabnas/jsonc
 # Go
 go get github.com/tabnas/jsonc/go
 ```
+
+The Rust crate is not published: it depends on the `tabnas`, `tabnas-jsonic`
+and `tabnas-json` crates by path, so clone `parser`, `jsonic` and `json`
+from `https://github.com/tabnas` beside this repository and add
+`tabnas-jsonc = { path = "../jsonc/rs" }` to your `Cargo.toml`
+(see [`rs/README.md`](rs/README.md)).
 
 ## Example
 
@@ -68,6 +75,12 @@ func main() {
 }
 ```
 
+Rust:
+
+```rust
+let value = tabnas_jsonc::parse(r#"{ "foo": /*hello*/true }"#)?;   // {"foo":true}
+```
+
 ## Documentation
 
 The docs follow the four [Diátaxis](https://diataxis.fr) quadrants, one
@@ -86,9 +99,10 @@ TS version" section.
 ## Grammar
 
 The grammar is defined once in the top-level
-[`jsonc-grammar.jsonic`](jsonc-grammar.jsonic) and embedded into both the
-TypeScript ([`ts/src/jsonc.ts`](ts/src/jsonc.ts)) and Go
-([`go/jsonc.go`](go/jsonc.go)) implementations by
+[`jsonc-grammar.jsonic`](jsonc-grammar.jsonic) and embedded into the
+TypeScript ([`ts/src/jsonc.ts`](ts/src/jsonc.ts)), Go
+([`go/jsonc.go`](go/jsonc.go)) and Rust ([`rs/src/lib.rs`](rs/src/lib.rs))
+implementations by
 [`ts/embed-grammar.js`](ts/embed-grammar.js) (run as part of `npm run
 build`). Edit the `.jsonic` file, then re-embed; never edit the embedded
 copies by hand.
