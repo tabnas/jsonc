@@ -41,9 +41,21 @@ There is **no CLI** in this repo (no `bin` in `package.json`, no `ts/bin/`).
 
 ## The tabnas engine dependency
 
-All three runtimes depend on the unpublished `@tabnas` siblings via a
-**sibling checkout** (the standard tabnas dev model until the packages
-publish tagged releases):
+How each runtime reaches its `@tabnas` dependencies differs, and **only
+Rust needs a sibling checkout**:
+
+- **TypeScript and Go resolve published packages**, from the npm registry
+  and the Go module proxy. A sibling checkout is optional local wiring
+  there, and it is wiring with a cost: measuring either runtime against a
+  linked sibling, or under a `go.work`, measures a version no consumer
+  installs, so a regression in the declared ones goes unseen. That is
+  what `go/go.mod` carrying no `replace` is protecting, and why a
+  `go.work` belongs outside every repository (see "Never commit the local
+  wiring").
+- **Rust takes path dependencies on crates that are not published**, so
+  the sibling checkouts are the only resolution and are mandatory.
+
+Per runtime:
 
 - TypeScript: `@tabnas/jsonic` and `@tabnas/parser` are declared as
   `peerDependencies` (`">=0"`) in `ts/package.json` and mirrored as
