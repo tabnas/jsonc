@@ -63,14 +63,14 @@ there.
 ## Rules
 
 - Prefer adding a fixture here over a one-off in-language assertion when a
-  case is expressible as input → output. That is what keeps the two
+  case is expressible as input → output. That is what keeps the three
   runtimes honest against each other.
 - Write a rejection row as `ERROR:<code>`, never as a bare `ERROR`. No
   fixture here carries a bare cell any more: a bare `ERROR` asserts only
   that the document is refused, so a runtime could start raising a
   different code and stay green, and two runtimes that reject the same
   input with different codes have agreed on nothing.
-- TypeScript is canonical. If the two runtimes disagree, the TS behaviour is
+- TypeScript is canonical. If the runtimes disagree, the TS behaviour is
   the expected value — unless Go has exposed a genuine TS defect, in which
   case fix TS first and pin the corrected behaviour here.
 - A new fixture must pass in ALL THREE runtimes: run `go test ./...` (from
