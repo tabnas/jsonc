@@ -136,9 +136,12 @@ there are no bespoke shapes and no exemptions;
 `every_fixture_has_the_shared_shape` asserts the header on each file
 and a floor of twelve files. Per row: the `opts` cell is parsed as JSON
 into `JsoncOptions` (an empty cell is the defaults; a cell that is not
-JSON comes back as a VALUE, so a bare `ERROR` row cannot be satisfied
-by a broken harness), a FRESH parser is built through `make_with`, and
-the result goes through `to_json` (the Go runner's flattening).
+JSON comes back as a VALUE, so a rejection row cannot be satisfied by a
+broken harness), a FRESH parser is built through `make_with`, and the
+result goes through `to_json` (the Go runner's flattening). Every
+rejection row states its code as `ERROR:<code>`, compared exactly, so a
+row is a claim about which error the document produces and not merely
+that it produces one.
 
 The input cell is decoded by this crate's own `unescape_jsonc`, not the
 shared codec, because jsonc's fixtures need `\0` decoded to NUL (a raw
