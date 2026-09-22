@@ -520,20 +520,25 @@ They stay in the Makefile because removing them is a separate change.
 This package declares **no** error codes of its own —
 `jsonc-grammar.jsonic` carries no `options: error:` table; the plugin only
 adds alts and tightens options. Every error jsonc raises is inherited from
-the engine or from `@tabnas/jsonic`; four are exercised by fixtures here —
-`unexpected`, `unprintable`, `unterminated_comment`, and
-`unterminated_string` — pinned as `ERROR:<code>` rows in
-`test/spec/comments.tsv`, `keywords.tsv`, `numbers.tsv` and
-`strings.tsv`. Inherited codes are not redeclared; overriding one means
-adding an `error` table to the grammar, which is a deliberate behaviour
-change.
+the engine or from `@tabnas/jsonic`; six are exercised by fixtures here:
+`unexpected` (`array-errors.tsv`, `comments.tsv`, `disallow-comments.tsv`,
+`errors.tsv`, `keywords.tsv`, `numbers.tsv`, `object-errors.tsv`,
+`strings.tsv`, `trailing-comma.tsv`), `unprintable`,
+`unterminated_string` and `invalid_unicode` (`strings.tsv`),
+`unterminated_comment` (`comments.tsv`) and `end_of_source`
+(`object-errors.tsv`). Inherited codes are not redeclared; overriding one
+means adding an `error` table to the grammar, which is a deliberate
+behaviour change.
 
-Many rejection rows are a weaker contract: `test/spec/array-errors.tsv`,
-`errors.tsv`, `object-errors.tsv`, `strings.tsv` and
-`trailing-comma.tsv` carry bare `ERROR` cells, which assert that a
-document is rejected but not with which code — either runtime could change
-the code it raises without a test going red. Tightening those rows to
-`ERROR:<code>` is an A3/A4 conversion target.
+**Every rejection row carries its code.** No fixture holds a bare `ERROR`
+cell any more: each one is `ERROR:<code>`, compared exactly, so a runtime
+that starts rejecting a document with a different code goes red instead of
+staying silently green. Write new rejection rows the same way. A bare
+`ERROR` asserts only that the document is refused, which is the weaker
+contract the earlier `array-errors.tsv`, `errors.tsv`,
+`object-errors.tsv`, `strings.tsv` and `trailing-comma.tsv` rows had, and
+two runtimes that reject the same input with different codes have agreed
+on nothing.
 
 The machine-readable list is [`tabnas.plugin.json`](tabnas.plugin.json)
 (`errorCodes`) — empty, correctly, since nothing is declared. Keep it in

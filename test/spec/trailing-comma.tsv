@@ -5,6 +5,6 @@ input	expected	opts
 { "hello": [], "world": {} }	{"hello":[],"world":{}}	{"allowTrailingComma":true}
 [ 1, 2, ]	[1,2]	{"allowTrailingComma":true}
 [ 1, 2 ]	[1,2]	{"allowTrailingComma":true}
-{ "hello": [], }	ERROR
-{ "hello": [], "world": {}, }	ERROR
-[ 1, 2, ]	ERROR
+{ "hello": [], }	ERROR:unexpected
+{ "hello": [], "world": {}, }	ERROR:unexpected
+[ 1, 2, ]	ERROR:unexpected

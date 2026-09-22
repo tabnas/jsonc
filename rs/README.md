@@ -73,7 +73,10 @@ Parse errors are the engine's `TabnasError`, re-exported as
 `JsoncError`, with `code`, `row`, `col` and a report that shows the
 offending source with a caret. The plugin declares no codes of its own;
 the ones a JSONC document meets are `unexpected`, `unprintable`,
-`unterminated_comment`, `unterminated_string` and `end_of_source`.
+`unterminated_comment`, `unterminated_string`, `invalid_unicode` and
+`end_of_source`, every one of them pinned by an `ERROR:<code>` row in the
+shared fixtures and so identical in all three runtimes. One more,
+`cancel`, is reached only past the nesting limit described below.
 
 ## Install
 
