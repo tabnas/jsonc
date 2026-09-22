@@ -96,6 +96,12 @@ file each, per language:
 The Go [concepts](go/doc/concepts.md) doc includes a "Differences from the
 TS version" section.
 
+The Rust crate documents itself: [`rs/README.md`](rs/README.md) is its
+front page, with a "Differences from the canonical TypeScript" section,
+and the API reference is the rustdoc, built with `cargo doc --no-deps`
+from [`rs/`](rs/). Every Rust example in that README runs as a doctest,
+so an example that stops compiling or stops holding fails the build.
+
 ## Grammar
 
 The grammar is defined once in the top-level

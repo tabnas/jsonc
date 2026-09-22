@@ -29,9 +29,9 @@ fn runner() -> Runner {
         // unescape_jsonc), so the raw cell is read and decoded here.
         let input = unescape_jsonc(row.named("input"));
 
-        // A bare `ERROR` row is satisfied by ANY failure, so a broken
+        // A rejection row is satisfied by a failure, so a broken
         // harness (a malformed `opts` cell, a plugin that failed to
-        // install) would read as a conformance result. Hand anything
+        // install) could read as a conformance result. Hand anything
         // that is not a real parse failure back as a VALUE: the row then
         // fails, saying what actually went wrong, instead of passing as a
         // rejection the parser never made. The TypeScript runner does the

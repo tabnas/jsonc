@@ -11,7 +11,7 @@ and this file only covers what is specific to this crate.
 | `src/lib.rs` | the whole port: the embedded grammar text, `JsoncOptions`, `DEPTH_LIMIT` and the budget check, `jsonc`, `plugin`, `make`, `make_with`, `parse` |
 | `tests/parity_test.rs` | every `../test/spec/*.tsv` fixture through `tabnas_support::Runner::new_with_row`, a fresh parser per row from the `opts` column |
 | `tests/jsontestsuite_test.rs` | the vendored RFC 8259 corpus in all three option modes against `../test/known-lenient.json`; fails, never skips |
-| `tests/jsonc_test.rs` | the port of `go/jsonc_test.go` (which mirrors `ts/test/jsonc.test.ts`), plus what a fixture cannot say: group tags, option round-trips, layering, derive, the nesting boundary, the embed against the file on disk, threads |
+| `tests/jsonc_test.rs` | the port of `go/jsonc_test.go` (which mirrors `ts/test/jsonc.test.ts`), plus what a fixture cannot say: group tags, the rule graph, option round-trips, layering, derive, the nesting boundary, the embed against the file on disk, threads |
 | `tests/perf_test.rs` | instance reuse beats rebuild-per-parse, mirroring `go/perf_test.go` |
 | `tests/version_test.rs` | Cargo.toml == `VERSION` == ts/package.json |
 | `tests/common/mod.rs` | shared helpers: spec dir, value and failure conversion, the jsonc escape codec, the options cell reader |
@@ -136,9 +136,12 @@ there are no bespoke shapes and no exemptions;
 `every_fixture_has_the_shared_shape` asserts the header on each file
 and a floor of twelve files. Per row: the `opts` cell is parsed as JSON
 into `JsoncOptions` (an empty cell is the defaults; a cell that is not
-JSON comes back as a VALUE, so a bare `ERROR` row cannot be satisfied
-by a broken harness), a FRESH parser is built through `make_with`, and
-the result goes through `to_json` (the Go runner's flattening).
+JSON comes back as a VALUE, so a rejection row cannot be satisfied by a
+broken harness), a FRESH parser is built through `make_with`, and the
+result goes through `to_json` (the Go runner's flattening). Every
+rejection row states its code as `ERROR:<code>`, compared exactly, so a
+row is a claim about which error the document produces and not merely
+that it produces one.
 
 The input cell is decoded by this crate's own `unescape_jsonc`, not the
 shared codec, because jsonc's fixtures need `\0` decoded to NUL (a raw
@@ -158,6 +161,23 @@ Node applies, so the invalid-UTF-8 cases reach the parser as the same
 text they reach the canonical runtime as. With the budget in place the
 three modes take a few seconds each in a debug build; most of that is
 the pinned 500-level case and the two cancelled deep cases.
+
+## There is no Rust counterpart of `debug-model.test.ts`
+
+The TypeScript suite layers `@tabnas/debug` on the plugin and reads the
+grammar back out of `tn.debug.model()`: the rule set, the plugin stack,
+the entry rule, and the rule-reference graph. The Rust debug crate is
+not a dependency of this one, and adding it would put a fifth sibling
+checkout in the path of every `cargo test` here and of `ci/rust/run.sh`,
+to assert facts that are not jsonc's to assert. What IS jsonc's is the
+shape of the grammar the plugin leaves behind, and the engine reports
+all of it natively: `the_plugin_adds_no_rules_and_sits_on_jsonic` takes
+the rule set and the plugin stack from `rule_names` and the error's
+`plugins`, and `the_rule_graph_is_the_recursive_descent` takes the entry
+rule from `config` and the push and replace edges from `rule_specs`.
+Between them they cover every assertion the TypeScript composition test
+makes about this plugin. Do not add the debug crate here to close a gap
+that is already closed.
 
 ## The docs are gated
 

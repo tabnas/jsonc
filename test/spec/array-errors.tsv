@@ -1,8 +1,8 @@
 input	expected	opts
-[,]	ERROR
-[ 1 2, 3 ]	ERROR
-[ ,1, 2, 3 ]	ERROR
-[ ,1, 2, 3, ]	ERROR
-["foo", null, ]	ERROR
-["foo", null,, ]	ERROR
-[["foo", null,, ],	ERROR
+[,]	ERROR:unexpected
+[ 1 2, 3 ]	ERROR:unexpected
+[ ,1, 2, 3 ]	ERROR:unexpected
+[ ,1, 2, 3, ]	ERROR:unexpected
+["foo", null, ]	ERROR:unexpected
+["foo", null,, ]	ERROR:unexpected
+[["foo", null,, ],	ERROR:unexpected
