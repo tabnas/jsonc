@@ -486,6 +486,60 @@ fn the_plugin_adds_no_rules_and_sits_on_jsonic() {
     assert_eq!(error.plugins, ["jsonic", "Jsonc"]);
 }
 
+/// The rest of what the TypeScript `debug-model` composition test reads
+/// out of `@tabnas/debug`: the entry rule and the rule-reference graph
+/// that encodes the recursive descent. There is no Rust counterpart of
+/// that test, because the Rust debug crate is not a dependency here and
+/// nothing in the composition is jsonc's to assert; what IS jsonc's is
+/// the shape of the grammar it leaves behind, and the engine reports
+/// that natively through `config` and `rule_specs`.
+#[test]
+fn the_rule_graph_is_the_recursive_descent() {
+    let parser = make();
+    assert_eq!(parser.config().rule.start, "val");
+
+    // Distinct rule names each rule's alternates name, in the order they
+    // first appear. The graph is what matters here, not how many
+    // alternates happen to reach the same rule.
+    let edges = |rule: &str, close: bool, replace: bool| -> Vec<String> {
+        let spec = parser
+            .rule_specs()
+            .into_iter()
+            .find(|spec| spec.name == rule)
+            .unwrap_or_else(|| panic!("rule {rule:?} missing"));
+        let alts = if close { &spec.close } else { &spec.open };
+        let mut names: Vec<String> = Vec::new();
+        for alt in alts {
+            if let Some(name) = if replace { &alt.r } else { &alt.p } {
+                if !names.contains(name) {
+                    names.push(name.clone());
+                }
+            }
+        }
+        names
+    };
+    let open_push = |rule: &str| edges(rule, false, false);
+    let close_replace = |rule: &str| edges(rule, true, true);
+
+    // A value opens a container: the object and array rules are both
+    // reachable from `val.open`.
+    let from_val = open_push("val");
+    assert!(from_val.contains(&"map".to_string()), "val should push map");
+    assert!(
+        from_val.contains(&"list".to_string()),
+        "val should push list"
+    );
+
+    // The descent: a container pushes its member rule, a member pushes a
+    // value, and a member loops back onto itself to take the next one.
+    assert_eq!(open_push("map"), ["pair"]);
+    assert_eq!(open_push("list"), ["elem"]);
+    assert_eq!(open_push("pair"), ["val"]);
+    assert_eq!(open_push("elem"), ["val"]);
+    assert_eq!(close_replace("pair"), ["pair"]);
+    assert_eq!(close_replace("elem"), ["elem"]);
+}
+
 /// The embedded grammar text is the file at the repository root, byte for
 /// byte, plus the leading newline the embedding adds. `ts/embed-grammar.js`
 /// writes both; a hand edit between the markers fails here.
