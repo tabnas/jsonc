@@ -618,11 +618,19 @@ structured grammar model: the rule set is exactly the shared jsonic
 `m.config.start === 'val'` (note `config.start`, not `m.start`), the plugin
 stack is `['jsonic', 'Jsonc', 'Debug']`, `val` pushes `map`/`list`, and the
 `map -> pair`, `list -> elem`, `pair/elem -> val` push edges plus the
-`pair`/`elem` close-replace self-loops hold. It resolves debug dynamically
-and **skips** unless `@tabnas/debug` is installed (it is a `file:`
-devDependency, so plain `npm test` runs it) or `TABNAS_DEBUG_PATH` points at
-a built sibling. There is no Go composition test; `@tabnas/debug/go` is only
-an indirect module dependency.
+`pair`/`elem` close-replace self-loops hold. It resolves debug
+dynamically, from `TABNAS_DEBUG_PATH` first and then from the package
+name, and **fails** rather than skips when neither resolves: debug is a
+declared devDependency, so a plain `npm test` must be able to load it, and
+a composition check that quietly vanishes is worse than none.
+
+There is no Go composition test; `@tabnas/debug/go` is only an indirect
+module dependency. There is no Rust one either, and that is deliberate:
+the Rust suite asserts the same facts about this plugin through the
+engine's own `rule_names`, `config` and `rule_specs`, in
+`the_plugin_adds_no_rules_and_sits_on_jsonic` and
+`the_rule_graph_is_the_recursive_descent`, rather than taking a fifth
+sibling checkout as a dependency. See [`rs/AGENTS.md`](rs/AGENTS.md).
 
 ## CI
 
