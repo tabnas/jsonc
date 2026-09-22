@@ -57,13 +57,18 @@ publish tagged releases):
   `ts/node_modules/@tabnas/`: a symlink to the checkout on a linked
   working tree, the registry copy otherwise. Nothing in the manifest
   pins it, and nothing should be committed that does.
-- Go: `go/go.mod` requires `github.com/tabnas/jsonic/go` with
-  `replace github.com/tabnas/jsonic/go => ../../jsonic/go`. `jsonic/go`
-  re-exports the engine types (`jsonic.Make`, `jsonic.Options`,
-  `jsonic.Jsonic`, …), so `jsonc.go` imports `jsonic`, not `parser`,
-  directly. The other replaces in `go.mod` (`parser`, `json`, `debug`)
-  cover the **indirect** modules jsonic pulls in transitively; jsonc has
-  no direct dependency on them.
+- Go: `go/go.mod` requires `github.com/tabnas/jsonic/go` and
+  `github.com/tabnas/support/go` directly, and carries
+  `github.com/tabnas/parser/go` and `github.com/tabnas/json/go` as the
+  **indirect** modules jsonic pulls in transitively; jsonc has no direct
+  dependency on either. `jsonic/go` re-exports the engine types
+  (`jsonic.Make`, `jsonic.Options`, `jsonic.Jsonic`, …), so `jsonc.go`
+  imports `jsonic`, not `parser`, directly. **There is no `replace`
+  directive in `go.mod`, and none belongs there**: every requirement
+  names a published version, so a plain `go test` resolves the module
+  cache. Testing against an unreleased sibling means a `go.work` one
+  level up, outside every repository, which is local wiring and is never
+  committed (see "Never commit the local wiring").
 - Rust: `rs/Cargo.toml` takes `tabnas = { path = "../../parser/rs" }`,
   `tabnas-jsonic = { path = "../../jsonic/rs" }` (which itself takes
   `../../json/rs`) and, as a dev-dependency,
@@ -99,14 +104,16 @@ grammar-text option converter (`parser/go` `utility.go`, the `m["string"]`
 branch) did not carry the key across, so `go/jsonc.go` re-applied it
 through the typed API in `SetOptions`. The converter now handles it and
 that re-application has been removed; the grammar is the sole source of
-truth. **This raises the engine floor:** `go/jsonc.go` now needs a
-`parser/go` newer than the published `v0.6.0`. A `GOWORK=off` run (which
-resolves the published module rather than the sibling checkout — see
-"Build & test") therefore fails three cases in `TestStrings` and
-`TestSpec/strings.tsv` (`"\x42"`, `["\x00"]`, `"\u{41}"` are accepted
-instead of rejected) until `parser/go` is republished and `go/go.mod` is
-bumped. Run `cd go && go test -count=1 ./...` with the workspace active to
-see the true result.
+truth. **It raised the engine floor:** `go/jsonc.go` needs a `parser/go`
+newer than `v0.6.0`, and for a while a `GOWORK=off` run failed three
+cases in `TestStrings` and `TestSpec/strings.tsv` (`"\x42"`, `["\x00"]`
+and `"\u{41}"` were accepted instead of rejected) because the published
+engine did not carry the converter. That floor is met: `go/go.mod` now
+carries `github.com/tabnas/parser/go` indirectly at a version that
+converts the key, and `(cd go && GOWORK=off go test -count=1 ./...)`
+passes those three cases against the module cache. Measure before
+believing a note like this one; the version a `go.mod` names is the
+record.
 
 ## The grammar is embedded — never hand-edit the embedded block
 
@@ -236,11 +243,13 @@ run the TS, Go and Rust sides, and `make publish-go V=x.y.z` injects `V` into th
 version. `ts/Makefile` has the same targets scoped to the package, plus
 a standalone `make embed`.
 
-Local builds resolve the unpublished siblings without a workspace file:
-the TS side via the `file:../../{jsonic,parser,debug,railroad}/ts`
-devDependencies in `ts/package.json`, and the Go side via the `replace`
-directives in `go/go.mod` (`../../jsonic/go`, plus the transitive
-`parser`/`json`/`debug` replaces). There is no checked-in `go.work`.
+The two sides reach a sibling checkout by different routes, and neither
+is in a committed manifest. The TypeScript side takes whatever
+`ts/node_modules/@tabnas/` holds, which a linked working tree fills with
+symlinks to the checkouts. The Go side resolves the published versions
+its `go.mod` requires, and reaches sibling checkouts only through a
+`go.work` placed one level up, outside every repository. There is no
+checked-in `go.work` and no `replace` in `go/go.mod`.
 
 ## Verify your work
 
