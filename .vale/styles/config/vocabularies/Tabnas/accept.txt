@@ -10,6 +10,7 @@
 
 [Bb]oolean
 [Cc]onfig
+[Dd]octest
 [Ee]rroring
 [Ff]ootgun
 [Jj]son
@@ -22,6 +23,7 @@
 [Mm]atchers
 [Nn]pm
 [Rr]untimes
+[Rr]ustdoc
 [Ss]eriot
 [Tt]abnas
 [Vv]endored
