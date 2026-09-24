@@ -10,7 +10,7 @@ JSONC is the dialect of editor and tool configuration files such as
 objects and arrays. The plugin layers on the relaxed-JSON grammar of
 [`tabnas-jsonic`](https://github.com/tabnas/jsonic) and adds no rules of
 its own: it installs an end-of-input alternate, the trailing-comma
-alternates, and pulls the lexer, number, string and map options back
+alternates, and pulls the lexer, number, string, and map options back
 toward standard JSON.
 
 This is the Rust port of the canonical TypeScript implementation in

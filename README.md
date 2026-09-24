@@ -12,7 +12,7 @@ A JSONC (JSON-with-comments) grammar plugin for the
 [jsonic](https://github.com/tabnas/jsonic) relaxed-JSON grammar to accept
 the JSONC dialect: standard JSON plus single-line (`//`) and block
 (`/* */`) comments, with optional trailing commas. Available for
-TypeScript/JavaScript, Go and Rust.
+TypeScript/JavaScript, Go, and Rust.
 
 Docs, guides, the error reference and the playground: **[tabnas.dev](https://tabnas.dev)**.
 
