@@ -458,7 +458,8 @@ The steps, in order:
    workflow **has no test step** — it reads `main`, builds against
    already-published dependencies, publishes and tags. The bump commit's
    own CI is the only gate there is, and after the merge that is
-   `ci.yml` alone.
+   `ci.yml` and `rust.yml`: the bump touches `rs/`, so the Rust gate runs
+   on it too.
 
    An npm version is immutable, and a Go module tag is worse: proxy.golang.org caches module versions permanently,
    so a `go/vX.Y.Z` naming the wrong commit cannot be moved, only
@@ -716,19 +717,45 @@ sibling checkout as a dependency. See [`rs/AGENTS.md`](rs/AGENTS.md).
 
 ## CI
 
-`.github/workflows/build.yml` has two jobs, neither publishing to npm:
+`build.yml` is gone. The workflows this repo has are `ci.yml`,
+`clib.yml`, `clib-release.yml`, `crates-release.yml`, `release.yml`,
+`notify-status.yml`, `scorecard.yml`, `docs.yml` and `rust.yml`; read
+them rather than a description of them here. Only `release.yml`
+publishes to npm. To change a workflow, edit it in a reviewed pull
+request: session credentials push `.github/workflows/*` (admin
+`DECISIONS.md` ADR-8, as amended 2026-09-24). They still cannot push
+tags, so a maintainer pushes any tag that a tag-triggered workflow
+needs. Mirror the change in admin where admin keeps a copy: if admin's
+`rollout/workflows/` holds a `jsonc__<file>.yml` template for it, make
+the same edit there, or admin `scripts/verify.sh` reports drift and a
+maintainer's `rollout/apply-workflows.sh --apply` pushes the older text
+back. `clib.yml` and `clib-release.yml` are stamped from admin
+`tasks/clib-template/`: change the template and restamp, never the
+copies. [`ci/README.md`](ci/README.md) has the steps.
 
-- **build** (Ubuntu/Windows/macOS, Node 24): sets
-  `git config --global core.autocrlf false` (CRLF corrupts the vendored
-  `.json` fixtures), git-clones the tabnas closure
-  (`parser debug json abnf railroad jsonic`) as siblings,
-  `npm i && npm run build --if-present` each in topo order, then
-  `npm test` in `jsonc/ts`. Because `@tabnas/debug` is a devDependency, the
-  composition test runs as part of `npm test`.
-- **build-go** (Ubuntu/macOS, Go 1.24): clones the same siblings, mirrors
-  `admin/scripts/link.sh` by creating `vendor/` symlinks for any
-  `../vendor/` replaces and a `go work` over every non-vendor-replaced
-  module, then `go build ./...` / `go test -v ./...` in `jsonc/go`.
+`ci.yml` is a **caller**. It delegates to the org-shared
+`tabnas/.github/.github/workflows/polyglot-ci.yml@main` and passes the
+one thing this repo decides:
+
+```yaml
+deps: "parser support debug json jsonic"
+```
+
+The operating systems, the Node and Go versions and the steps live in
+that shared workflow and cannot be read from this checkout; read it if
+you need the matrix. One property of the fixtures holds on any runner:
+CRLF corrupts the vendored `.json` fixtures, so a Windows checkout needs
+`git config --global core.autocrlf false` before the suites mean
+anything. Because `@tabnas/debug` is a devDependency, the composition
+test runs as part of `npm test`.
+
+`rs/` is covered by `.github/workflows/rust.yml`, not by `ci.yml`,
+because the shared polyglot workflow takes no Rust input. `rust.yml`
+clones `parser`, `json`, `jsonic` and `support` beside the checkout,
+since the crate takes them as path dependencies, and runs
+`ci/rust/run.sh` on the MSRV that `rs/Cargo.toml` pins: the same script
+you run locally. `.github/workflows/docs.yml` is the Vale half of the
+prose gate.
 
 ## Agent tooling
 

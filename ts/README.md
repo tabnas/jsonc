@@ -8,7 +8,7 @@ plus single-line (`//`) and block (`/* */`) comments, with optional
 trailing commas.
 
 [![npm version](https://img.shields.io/npm/v/@tabnas/jsonc.svg)](https://npmjs.com/package/@tabnas/jsonc)
-[![build](https://github.com/tabnas/jsonc/actions/workflows/build.yml/badge.svg)](https://github.com/tabnas/jsonc/actions/workflows/build.yml)
+[![CI](https://github.com/tabnas/jsonc/actions/workflows/ci.yml/badge.svg)](https://github.com/tabnas/jsonc/actions/workflows/ci.yml)
 
 | ![Voxgig](https://www.voxgig.com/res/img/vgt01r.png) | This open source module is sponsored and supported by [Voxgig](https://www.voxgig.com). |
 | ---------------------------------------------------- | --------------------------------------------------------------------------------------- |
