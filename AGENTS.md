@@ -457,9 +457,9 @@ The steps, in order:
 4. **Wait for `main` CI to go green on the bump commit.** The release
    workflow **has no test step** — it reads `main`, builds against
    already-published dependencies, publishes and tags. The bump commit's
-   own CI is the only gate there is, and after the merge that is
-   `ci.yml` and `rust.yml`: the bump touches `rs/`, so the Rust gate runs
-   on it too.
+   own CI is the only gate there is, and after the merge that is `ci.yml`,
+   `deps-gate.yml` and `rust.yml`: the bump touches `rs/`, so the Rust gate
+   runs on it too.
 
    An npm version is immutable, and a Go module tag is worse: proxy.golang.org caches module versions permanently,
    so a `go/vX.Y.Z` naming the wrong commit cannot be moved, only
@@ -719,10 +719,10 @@ sibling checkout as a dependency. See [`rs/AGENTS.md`](rs/AGENTS.md).
 
 `build.yml` is gone. The workflows this repo has are `ci.yml`,
 `clib.yml`, `clib-release.yml`, `crates-release.yml`, `release.yml`,
-`notify-status.yml`, `scorecard.yml`, `docs.yml` and `rust.yml`; read
-them rather than a description of them here. Only `release.yml`
-publishes to npm. To change a workflow, edit it in a reviewed pull
-request: session credentials push `.github/workflows/*` (admin
+`notify-status.yml`, `scorecard.yml`, `docs.yml`, `rust.yml` and
+`deps-gate.yml`; read them rather than a description of them here. Only
+`release.yml` publishes to npm. To change a workflow, edit it in a reviewed
+pull request: session credentials push `.github/workflows/*` (admin
 `DECISIONS.md` ADR-8, as amended 2026-09-24). They still cannot push
 tags, so a maintainer pushes any tag that a tag-triggered workflow
 needs. Mirror the change in admin where admin keeps a copy: if admin's
