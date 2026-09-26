@@ -189,9 +189,9 @@ impl JsoncOptions {
 /// with the height of its rule stack, so a parse costs time quadratic in
 /// the nesting depth: measured in a debug build, 100 levels cost 0.07 s
 /// and 500 levels 1.6 s, so the RFC 8259 corpus's
-/// `n_structure_100000_opening_arrays` would take hours to reject. The
-/// engine's parse budget stops such a document at the limit with the
-/// `cancel` code instead.
+/// `n_structure_100000_opening_arrays` would take hours to reject. A
+/// parse guard stops such a document at the limit with the `cancel` code
+/// instead.
 ///
 /// The limit is also what keeps a deep document from ending the process.
 /// [`Value::to_json`] RECURSES once per level, about 2.2 KiB of stack per
@@ -239,10 +239,19 @@ fn depth(context: &Context) -> usize {
     ancestors + current
 }
 
-/// The parse budget: `DEPTH_LIMIT` levels parse, the next one does not.
+/// The depth guard: `DEPTH_LIMIT` levels parse, the next one does not.
 fn within_depth_limit(context: &Context) -> bool {
     depth(context) <= DEPTH_LIMIT
 }
+
+/// The name the depth check is installed under, as a parse guard.
+///
+/// It is the name jsonic installs its own 127-level check under, so this
+/// one replaces it: that is how JSONC allows 512 levels on a grammar built
+/// on jsonic. A guard rather than the parse budget, because the budget is
+/// one slot that a caller's `parse_budget` replaces, and the limit went
+/// with it whenever a caller set a budget of its own.
+const DEPTH_GUARD: &str = "depth";
 
 /// The serialized `@/pattern/flags` regular expression reference, as a
 /// bare pattern for the `regex` crate.
@@ -388,13 +397,12 @@ pub fn jsonc(parser: &mut Tabnas, options: &JsoncOptions) -> Result<(), GrammarE
         })
         .map_err(|error| GrammarError(error.0))?;
 
-    // LAST, after both the grammar and the options pass: each applies
-    // its own options, and a pass that does not mention `parse.budget`
-    // is not required to keep one set earlier. Checked every iteration,
+    // A guard, not the budget (see `DEPTH_GUARD`): it replaces jsonic's,
+    // and a budget the caller sets runs beside it. Checked every step,
     // because the check is what bounds the engine's quadratic cost on a
     // deeply nested source; a sampled check would let the parse run past
     // the limit by however many levels the sample missed.
-    parser.parse_budget(1, within_depth_limit);
+    parser.parse_guard(DEPTH_GUARD, within_depth_limit);
 
     Ok(())
 }
