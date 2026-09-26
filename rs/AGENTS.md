@@ -8,7 +8,7 @@ and this file only covers what is specific to this crate.
 
 | Path | |
 |---|---|
-| `src/lib.rs` | the whole port: the embedded grammar text, `JsoncOptions`, `DEPTH_LIMIT` and the budget check, `jsonc`, `plugin`, `make`, `make_with`, `parse` |
+| `src/lib.rs` | the whole port: the embedded grammar text, `JsoncOptions`, `DEPTH_LIMIT` and the depth guard, `jsonc`, `plugin`, `make`, `make_with`, `parse` |
 | `tests/parity_test.rs` | every `../test/spec/*.tsv` fixture through `tabnas_support::Runner::new_with_row`, a fresh parser per row from the `opts` column |
 | `tests/jsontestsuite_test.rs` | the vendored RFC 8259 corpus in all three option modes against `../test/known-lenient.json`; fails, never skips |
 | `tests/jsonc_test.rs` | the port of `go/jsonc_test.go` (which mirrors `ts/test/jsonc.test.ts`), plus what a fixture cannot say: group tags, the rule graph, option round-trips, layering, derive, the nesting boundary, the embed against the file on disk, threads |
@@ -74,11 +74,13 @@ text against the file at the repository root and
 3. `set_options` for the argument-dependent options: `comment.lex` from
    `disallow_comments`, `rule.include = "jsonc,json"`, and
    `rule.exclude = "comma"` unless `allow_trailing_comma`.
-4. `parse_budget(1, within_depth_limit)`, LAST, because an options pass
-   that does not mention `parse.budget` need not preserve one.
+4. `parse_guard("depth", within_depth_limit)`, which replaces the
+   127-level guard jsonic installs under that name. A guard, not the
+   parse budget: the budget is one slot, and a caller's `parse_budget`
+   replaced it in place, taking the limit with it.
 
 Same order as the TypeScript and Go plugins for steps 2 and 3; the
-budget is this port's own (below).
+guard is this port's own (below).
 
 ## The nesting limit is a divergence, and why it exists
 
@@ -101,7 +103,7 @@ abort: parse a 1,000-level document on a worker thread, call `to_json`
 on the result, and the runtime kills the process, which no caller can
 catch.
 
-So `jsonc` sets a parse budget that cancels at `DEPTH_LIMIT` (512)
+So `jsonc` installs a parse guard that cancels at `DEPTH_LIMIT` (512)
 containers, counted from the rule names the way `tabnas_json` counts
 its own limit. The band is narrow and both walls are measured: the
 floor is 500, because `test/known-lenient.json` pins
@@ -158,7 +160,7 @@ it is missing. The pin is read from the same `known-lenient.json` the
 other runtimes read, and asserted exactly: a lenience gained or lost
 fails. Files are read with `from_utf8_lossy`, which is the decoding
 Node applies, so the invalid-UTF-8 cases reach the parser as the same
-text they reach the canonical runtime as. With the budget in place the
+text they reach the canonical runtime as. With the guard in place the
 three modes take a few seconds each in a debug build; most of that is
 the pinned 500-level case and the two cancelled deep cases.
 

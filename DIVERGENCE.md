@@ -39,9 +39,11 @@ nesting depth (measured in a debug build: 100 levels 0.07 s, 200
 levels 0.30 s, 400 levels 1.02 s, 500 levels 1.61 s, while flat input
 and long strings scale linearly). The RFC 8259 corpus's
 `n_structure_100000_opening_arrays` and `n_structure_open_array_object`
-would take hours each, so `tabnas_jsonc::jsonc` sets a parse budget
+would take hours each, so `tabnas_jsonc::jsonc` installs a parse guard
 that cancels at the limit, counted from the container rules the way
-`tabnas-json` counts its own.
+`tabnas-json` counts its own. A guard holds whatever parse budget the
+caller sets, and it replaces the 127-level guard `tabnas-jsonic`
+installs under the same name.
 
 Stack is the second, and it sets the ceiling. `Value::to_json` recurses
 once per level, about 2.2 KiB of stack per level in a debug build, so a

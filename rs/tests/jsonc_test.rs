@@ -718,6 +718,35 @@ fn nesting_deeper_than_the_limit_is_cancelled() {
     );
 }
 
+/// The limit is a parse guard, which holds whatever budget the caller
+/// sets. It was the parse budget, which is one slot: a caller's
+/// `parse_budget` replaced it in place and took the limit with it. The
+/// guard also replaces the one jsonic installs, rather than adding to it,
+/// so the limit is JSONC's 512 and not jsonic's 127.
+#[test]
+fn the_limit_holds_whatever_budget_the_caller_sets() {
+    let nested = |depth: usize| format!("{}{}", "[".repeat(depth), "]".repeat(depth));
+    let calls = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let seen = calls.clone();
+    let mut parser = make();
+    parser.parse_budget(1, move |_| {
+        seen.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        true
+    });
+    assert_eq!(parser.parse_guards.keys().collect::<Vec<_>>(), ["depth"]);
+    // Deeper than jsonic allows, shallower than JSONC does.
+    assert!(parser.parse(&nested(200)).is_ok());
+    assert!(
+        calls.load(std::sync::atomic::Ordering::Relaxed) > 0,
+        "the caller's budget runs too"
+    );
+    // Unclosed and far past the limit: stopped at it, cheaply.
+    assert_eq!(
+        parser.parse(&"[".repeat(100_000)).unwrap_err().code,
+        "cancel"
+    );
+}
+
 /// The other wall the limit sits between: a value at the limit must be
 /// walkable by the caller that receives it.
 ///
