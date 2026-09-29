@@ -136,7 +136,7 @@ Per runtime:
   cache. Testing against an unreleased sibling means a `go.work` one
   level up, outside every repository, which is local wiring and is never
   committed (see "Never commit the local wiring").
-- Rust: `rs/Cargo.toml` takes `tabnas = { path = "../../parser/rs" }`,
+- Rust: `rs/Cargo.toml` takes `tabnas = { package = "tabnas-parser", path = "../../parser/rs" }`,
   `tabnas-jsonic = { path = "../../jsonic/rs" }` (which itself takes
   `../../json/rs`) and, as a dev-dependency,
   `tabnas-support = { path = "../../support/rs" }` (the shared fixture
