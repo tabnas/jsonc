@@ -8,12 +8,14 @@ and this file only covers what is specific to this crate.
 
 | Path | |
 |---|---|
-| `src/lib.rs` | the whole port: the embedded grammar text, `JsoncOptions`, `DEPTH_LIMIT` and the depth guard, `jsonc`, `plugin`, `make`, `make_with`, `parse` |
+| `src/lib.rs` | the whole port: the embedded grammar text, `JsoncOptions`, `DEPTH_LIMIT` and the depth guard, `jsonc`, `plugin`, `make`, `make_with`, `parse`, and the translation part `manifest_text`, `include_str!` of the copy in `translate/` |
 | `tests/parity_test.rs` | every `../test/spec/*.tsv` fixture through `tabnas_support::Runner::new_with_row`, a fresh parser per row from the `opts` column |
 | `tests/jsontestsuite_test.rs` | the vendored RFC 8259 corpus in all three option modes against `../test/known-lenient.json`; fails, never skips |
 | `tests/jsonc_test.rs` | the port of `go/jsonc_test.go` (which mirrors `ts/test/jsonc.test.ts`), plus what a fixture cannot say: group tags, the rule graph, option round-trips, layering, derive, the nesting boundary, the embed against the file on disk, threads |
 | `tests/perf_test.rs` | instance reuse beats rebuild-per-parse, mirroring `go/perf_test.go` |
 | `tests/version_test.rs` | Cargo.toml == `VERSION` == ts/package.json |
+| `tests/translate_test.rs` | the translation part: the embedded manifest is `../tabnas.plugin.json`, and its `translate` object reads and writes a tree through the `json` render alchemy carries, and its loss lines are sentences |
+| `translate/` | the crate's copy of `../tabnas.plugin.json` (as `manifest.json`), which a packaged crate needs; `tests/translate_test.rs` holds it to the file |
 | `tests/common/mod.rs` | shared helpers: spec dir, value and failure conversion, the jsonc escape codec, the options cell reader |
 | `README.md` | the crate front page, prose-gated; its `rust` fences are doctests of this crate (see below) |
 
