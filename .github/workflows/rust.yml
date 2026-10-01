@@ -21,6 +21,8 @@ on:
     branches: [ '**' ]
     paths:
       - 'rs/**'
+      - 'tabnas.plugin.json'
+      - 'alchemy/**'
       - 'test/spec/**'
       - 'test/JSONTestSuite/**'
       - 'test/known-lenient.json'
@@ -33,6 +35,8 @@ on:
   pull_request:
     paths:
       - 'rs/**'
+      - 'tabnas.plugin.json'
+      - 'alchemy/**'
       - 'test/spec/**'
       - 'test/JSONTestSuite/**'
       - 'test/known-lenient.json'
