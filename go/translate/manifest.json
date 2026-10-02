@@ -1,0 +1,46 @@
+{
+  "$schema": "https://tabnas.dev/schema/plugin.schema.json",
+  "name": "@tabnas/jsonc",
+  "go": "github.com/tabnas/jsonc/go",
+  "description": "JSONC (JSON with comments) parsing for the tabnas engine.",
+  "base": "@tabnas/jsonic",
+  "engine": "@tabnas/parser",
+  "grammar": "jsonc-grammar.jsonic",
+  "extensions": [
+    ".jsonc"
+  ],
+  "languageId": "jsonc",
+  "pluginKind": "grammar",
+  "grammarKind": "closure",
+  "lexStream": "clean",
+  "syncGroups": [
+    "end",
+    "comma",
+    "close"
+  ],
+  "specDir": "test/spec",
+  "clib": {
+    "dir": "go/clib",
+    "library": "libtabnasjsonc",
+    "abi": "v1",
+    "errorCodes": [
+      "usage",
+      "grammar",
+      "handle",
+      "internal"
+    ]
+  },
+  "errorCodes": [],
+  "docs": "https://tabnas.dev/docs/packages",
+  "repository": "https://github.com/tabnas/jsonc",
+  "versionSource": "ts/package.json",
+  "translate": {
+    "reads": "tree",
+    "writes": "tree",
+    "render": "json",
+    "loss": [
+      "Comments are not kept.",
+      "Trailing commas are not kept."
+    ]
+  }
+}

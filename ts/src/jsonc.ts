@@ -78,3 +78,6 @@ function Jsonc(tn: Tabnas, options: JsoncOptions) {
 export { VERSION, Jsonc }
 
 export type { JsoncOptions }
+
+export { translate } from './translate'
+export type { TranslationPart, TranslationParts } from './translate'
