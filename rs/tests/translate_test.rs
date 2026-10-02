@@ -36,6 +36,16 @@ fn the_manifest_the_crate_embeds_is_the_repositorys() {
     );
 }
 
+#[test]
+fn the_structural_interface_names_the_builtin_render_entry() {
+    let parts = tabnas_jsonc::translate().expect("JSONC carries translation parts");
+    assert_eq!(parts.manifest, tabnas_jsonc::manifest_text());
+    assert_eq!(parts.lift, None);
+    let render = parts.render.expect("JSONC carries a render");
+    assert_eq!(render.entry, "json");
+    assert_eq!(render.source, None);
+}
+
 /// JSONC is read as a tree and written from one, through the `json` render
 /// alchemy carries. Its events carry the tree already, so there is no
 /// lift, and no render file of its own.
