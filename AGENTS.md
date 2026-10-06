@@ -130,9 +130,12 @@ Per runtime:
   directly, and carries `github.com/tabnas/json/go` as the **indirect**
   module jsonic pulls in transitively. `jsonc.go` imports the engine as
   `tabnas` for the engine's types (`tabnas.Tabnas`, `tabnas.Options`,
-  `tabnas.GrammarSetting`, …) and does not import jsonic; jsonic's own
-  API is used by the stamped `go/clib/core.go` (`host.Make()`) and by the
-  tests. **There is no `replace`
+  `tabnas.GrammarSetting`, …) and imports jsonic blank (`_`), for the
+  text parser jsonic registers when it loads: `Jsonc` reads its grammar
+  with `j.GrammarText`, which fails with "no text parser registered"
+  without one, and `TestJsoncImportsJsonic` keeps the import. jsonic's
+  own API is used by the stamped `go/clib/core.go` (`host.Make()`) and
+  by the tests. **There is no `replace`
   directive in `go.mod`, and none belongs there**: every requirement
   names a published version, so a plain `go test` resolves the module
   cache. Testing against an unreleased sibling means a `go.work` one
@@ -221,7 +224,7 @@ hand edit between the markers fails there.
 
 - The grammar text is parsed by a **separate** jsonic engine instance
   (`new Tabnas().use(jsonic).parse(grammarText)` in TS; `j.GrammarText` in
-  Go), then handed to `tn.grammar(...)` / `j.GrammarText(...)` with
+  Go, with the text parser jsonic registers), then handed to `tn.grammar(...)` / `j.GrammarText(...)` with
   `{ rule: { alt: { g: 'jsonc' } } }`. That setting tags every alt the
   plugin installs with the group `jsonc`, which the `rule.include/exclude`
   filter and the railroad legend key off.

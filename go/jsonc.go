@@ -3,6 +3,13 @@
 package tabnasjsonc
 
 import (
+	// jsonic registers the engine's text parser when it loads
+	// (tabnas.RegisterTextParser, in jsonic's init), and Jsonc reads its
+	// grammar with j.GrammarText, which fails with "no text parser
+	// registered" without one. Importing it here makes that hold for every
+	// program that imports this package, as the TypeScript plugin imports
+	// @tabnas/jsonic to read the same grammar.
+	_ "github.com/tabnas/jsonic/go"
 	tabnas "github.com/tabnas/parser/go"
 )
 
