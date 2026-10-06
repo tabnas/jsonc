@@ -81,7 +81,7 @@ There are three implementations that must behave identically — TypeScript
 | Path | What it is |
 |---|---|
 | [`ts/`](ts/) | **Canonical** TypeScript implementation — the `@tabnas/jsonc` package. Plugin in `src/jsonc.ts`. Imports the engine as `@tabnas/parser` and the base grammar as `@tabnas/jsonic`. |
-| [`go/`](go/) | Go port — `github.com/tabnas/jsonc/go`. Plugin in `jsonc.go`. Imports `github.com/tabnas/jsonic/go` (jsonic re-exports the engine API in Go). |
+| [`go/`](go/) | Go port — `github.com/tabnas/jsonc/go`. Plugin in `jsonc.go`. Imports the engine as `github.com/tabnas/parser/go` (`tabnas`), and not jsonic; jsonic's own API is used by the stamped `go/clib/core.go` (`host.Make()`) and by the tests. |
 | [`rs/`](rs/) | Rust port — the `tabnas-jsonc` crate (library `tabnas_jsonc`). Plugin in `src/lib.rs`: `jsonc` / `plugin()`, the typed `JsoncOptions`, `make` / `make_with` / `parse`, and a nesting limit (`DEPTH_LIMIT`) the other runtimes do not have (see `DIVERGENCE.md`). Depends on sibling `tabnas/parser`, `tabnas/jsonic` (and through it `tabnas/json`) and, tests only, `tabnas/support` checkouts via Cargo `path` dependencies. Library only: no CLI. See [`rs/AGENTS.md`](rs/AGENTS.md). |
 | [`tabnas.plugin.json`](tabnas.plugin.json) | The plugin manifest, with the format's **translation part**: its `translate` object says JSONC reads as a tree and writes from one through the `json` render [alchemy](https://github.com/tabnas/alchemy) carries, and its `loss` lines, which a host prints verbatim, say what that render does not keep (comments and trailing commas). The Rust crate embeds a byte-identical copy, `rs/translate/manifest.json`, as `manifest_text()`, and `rs/tests/translate_test.rs` holds the copy to the file: change the manifest at the root, then copy it there. |
 | [`DIVERGENCE.md`](DIVERGENCE.md) | Where a port produces a different result for the same input. TS and Go have none; the Rust port has two engine-rooted ones, both pinned by its tests. |
@@ -125,13 +125,14 @@ Per runtime:
   `ts/node_modules/@tabnas/`: a symlink to the checkout on a linked
   working tree, the registry copy otherwise. Nothing in the manifest
   pins it, and nothing should be committed that does.
-- Go: `go/go.mod` requires `github.com/tabnas/jsonic/go` and
-  `github.com/tabnas/support/go` directly, and carries
-  `github.com/tabnas/parser/go` and `github.com/tabnas/json/go` as the
-  **indirect** modules jsonic pulls in transitively; jsonc has no direct
-  dependency on either. `jsonic/go` re-exports the engine types
-  (`jsonic.Make`, `jsonic.Options`, `jsonic.Jsonic`, …), so `jsonc.go`
-  imports `jsonic`, not `parser`, directly. **There is no `replace`
+- Go: `go/go.mod` requires `github.com/tabnas/jsonic/go`,
+  `github.com/tabnas/parser/go` and `github.com/tabnas/support/go`
+  directly, and carries `github.com/tabnas/json/go` as the **indirect**
+  module jsonic pulls in transitively. `jsonc.go` imports the engine as
+  `tabnas` for the engine's types (`tabnas.Tabnas`, `tabnas.Options`,
+  `tabnas.GrammarSetting`, …) and does not import jsonic; jsonic's own
+  API is used by the stamped `go/clib/core.go` (`host.Make()`) and by the
+  tests. **There is no `replace`
   directive in `go.mod`, and none belongs there**: every requirement
   names a published version, so a plain `go test` resolves the module
   cache. Testing against an unreleased sibling means a `go.work` one
@@ -177,7 +178,7 @@ newer than `v0.6.0`, and for a while a `GOWORK=off` run failed three
 cases in `TestStrings` and `TestSpec/strings.tsv` (`"\x42"`, `["\x00"]`
 and `"\u{41}"` were accepted instead of rejected) because the published
 engine did not carry the converter. That floor is met: `go/go.mod` now
-carries `github.com/tabnas/parser/go` indirectly at a version that
+requires `github.com/tabnas/parser/go` directly, at a version that
 converts the key, and `(cd go && GOWORK=off go test -count=1 ./...)`
 passes those three cases against the module cache. Measure before
 believing a note like this one; the version a `go.mod` names is the

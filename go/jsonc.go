@@ -3,7 +3,7 @@
 package tabnasjsonc
 
 import (
-	jsonic "github.com/tabnas/jsonic/go"
+	tabnas "github.com/tabnas/parser/go"
 )
 
 // VERSION is this module's version. It MUST equal ts/package.json
@@ -53,7 +53,7 @@ const grammarText = `
 // --- END EMBEDDED jsonc-grammar.jsonic ---
 
 // Jsonc configures a jsonic instance for JSONC parsing.
-func Jsonc(j *jsonic.Jsonic, pluginOpts map[string]any) error {
+func Jsonc(j *tabnas.Tabnas, pluginOpts map[string]any) error {
 	commentLex := true != toBool(pluginOpts["disallowComments"])
 	ruleExclude := "comma"
 	if toBool(pluginOpts["allowTrailingComma"]) {
@@ -61,9 +61,9 @@ func Jsonc(j *jsonic.Jsonic, pluginOpts map[string]any) error {
 	}
 
 	// Apply grammar: static options, rules, and trailing comma alts.
-	if err := j.GrammarText(grammarText, &jsonic.GrammarSetting{
-		Rule: &jsonic.GrammarSettingRule{
-			Alt: &jsonic.GrammarSettingAlt{G: "jsonc"},
+	if err := j.GrammarText(grammarText, &tabnas.GrammarSetting{
+		Rule: &tabnas.GrammarSettingRule{
+			Alt: &tabnas.GrammarSettingAlt{G: "jsonc"},
 		},
 	}); err != nil {
 		return err
@@ -73,9 +73,9 @@ func Jsonc(j *jsonic.Jsonic, pluginOpts map[string]any) error {
 	// `string.escapeStrict` is NOT re-applied here: the grammar text is the
 	// single source of truth for it and the engine's grammar-text option
 	// converter carries the key across.
-	j.SetOptions(jsonic.Options{
-		Comment: &jsonic.CommentOptions{Lex: &commentLex},
-		Rule: &jsonic.RuleOptions{
+	j.SetOptions(tabnas.Options{
+		Comment: &tabnas.CommentOptions{Lex: &commentLex},
+		Rule: &tabnas.RuleOptions{
 			Include: "jsonc,json",
 			Exclude: ruleExclude,
 		},
