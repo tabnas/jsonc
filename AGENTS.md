@@ -108,8 +108,9 @@ Rust needs a sibling checkout**:
   what `go/go.mod` carrying no `replace` is protecting, and why a
   `go.work` belongs outside every repository (see "Never commit the local
   wiring").
-- **Rust takes path dependencies on crates that are not published**, so
-  the sibling checkouts are the only resolution and are mandatory.
+- **Rust takes path dependencies.** The crates are on crates.io, but the
+  committed manifest names them by path alone, so the sibling checkouts
+  are the only resolution and are mandatory.
 
 Per runtime:
 
@@ -145,8 +146,9 @@ Per runtime:
   `tabnas-jsonic = { path = "../../jsonic/rs" }` (which itself takes
   `../../json/rs`) and, as a dev-dependency,
   `tabnas-support = { path = "../../support/rs" }` (the shared fixture
-  loader and runner). None is published, so the sibling checkout is the
-  only resolution; `rs/Cargo.lock` is committed and `ci/rust/run.sh`
+  loader and runner). All of them are on crates.io, but the manifest
+  names them by path alone, so the sibling checkout is the only
+  resolution; `rs/Cargo.lock` is committed and `ci/rust/run.sh`
   holds it to the manifest, exempting only the siblings' own version
   entries.
 
@@ -156,15 +158,16 @@ against and links them over the registry copies (see below).
 
 ## Authority and alignment rules
 
-**TypeScript is canonical. Go is a port of it.** When you change behavior:
+**TypeScript is canonical. Go and Rust are ports of it.** When you change
+behavior:
 
 1. Change `ts/src/jsonc.ts` first (or `jsonc-grammar.jsonic` for grammar
    changes — see the embed section below).
-2. Port the same change to `go/jsonc.go`.
-3. Mirror the test cases across `ts/test/jsonc.test.ts` and
-   `go/jsonc_test.go` — the two unit suites cover the same ground (they
-   share the microsoft/node-jsonc-parser-derived cases) and both must stay
-   green.
+2. Port the same change to `go/jsonc.go` and `rs/src/lib.rs`.
+3. Mirror the test cases across `ts/test/jsonc.test.ts`,
+   `go/jsonc_test.go` and `rs/tests/jsonc_test.rs` — the three unit suites
+   cover the same ground (they share the microsoft/node-jsonc-parser-derived
+   cases) and all three must stay green.
 
 Do not let the Go behavior drift from TS. There are **no** accepted
 behavioural deviations and no implementation deviations either: both
@@ -305,8 +308,9 @@ cargo clippy --all-targets --all-features -- -D warnings
 `make test-rs` is the fast Rust loop and `ci/rust/run.sh` the full gate
 (formatting, the lockfile check, the MSRV pin). `make version-rs V=x.y.z`
 rewrites the two Rust version sites (`rs/Cargo.toml`, `rs/src/lib.rs`)
-and the lockfile entry, without committing, because the crate is not
-published. `rs/AGENTS.md` has the crate-specific hazards.
+and the lockfile entry, without committing: the bump rides the release
+PR, and `release.yml`'s `crates` job publishes the crate to crates.io from
+the release tag. `rs/AGENTS.md` has the crate-specific hazards.
 
 The repo-root [`Makefile`](Makefile) wraps all three: `make build|test`
 run the TS, Go and Rust sides, and `make publish-go V=x.y.z` injects `V` into the
@@ -421,12 +425,14 @@ The steps, in order:
    suite then passes against unreleased code while appearing to verify the
    published one. Reinstalling is the part that matters.
 
-   One thing a clean install does **not** isolate:
-   `ts/test/doc-examples.test.*` resolves `@tabnas/*` by filesystem path
-   (`const TABNAS = path.join(REPO, '..')`), not through `node_modules`. If
-   unbuilt sibling checkouts sit beside this repo, those blocks fail with
-   `MODULE_NOT_FOUND` no matter what you installed — build the siblings, or
-   verify somewhere they are absent.
+   A clean install covers the doc examples too.
+   `ts/test/doc-examples.test.*` resolves a doc example's `require` through
+   `node_modules` first, and every `@tabnas` package the tested blocks name
+   here, `@tabnas/parser` and `@tabnas/jsonic`, is a devDependency, so the
+   installed copy is what runs; `@tabnas/jsonc` itself resolves to this
+   repository's `ts/`. Only a `@tabnas/*` package that is not installed
+   falls back to the sibling checkout `../<x>/ts`
+   (`const TABNAS = path.join(REPO, '..')`), and no example here needs one.
 
    `npm test` already compiles here: `ts/package.json` sets `pretest` to
    `npm run build`, which npm runs automatically. No separate build step is
@@ -440,13 +446,17 @@ The steps, in order:
    ```bash
    (
      cd go
-     go mod edit -json | grep -q '"Replace": null' || { echo 'go.mod has a replace'; exit 1; }
+     go mod edit -json | jq -e '.Replace == null' >/dev/null || { echo 'go.mod has a replace'; exit 1; }
      GOWORK=off go test -count=1 ./...
    )
    ```
 
    `-count=1` because shared fixtures live outside the Go module, so a
-   changed corpus does not invalidate the test cache.
+   changed corpus does not invalidate the test cache. The check asks `jq`,
+   not `grep`: current Go leaves the `Replace` key out when there is no
+   replace, where older Go printed `"Replace": null`, and `jq` reads a
+   missing key as null, so the check passes on a clean `go.mod` and fails
+   on a replace either way.
 3. **Merge the bump through a reviewed PR.** That is the house convention —
    `CONTRIBUTING.md` squash-merges PRs and takes the title as the commit
    message — and what `release.yml`'s own header describes. A direct push to

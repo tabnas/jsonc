@@ -146,13 +146,13 @@ The error `Code` is the same string in both (`unterminated_string`,
 
 ### Known accepted differences
 
-None currently. The two runtimes accept and reject the same documents and
+None currently. TypeScript and Go accept and reject the same documents and
 report the same error `Code` for the same failure. Earlier releases noted
 two divergences that no longer exist: Go accepting the non-JSON `\v`
 string escape, and Go reporting `unterminated_string` where TS reported
 `unprintable` for a raw control character in a string. Both are now
 pinned as shared fixtures in [`test/spec/strings.tsv`](../../test/spec/strings.tsv),
-which runs in both runtimes.
+which runs in every runtime.
 
 ### Why this design
 
