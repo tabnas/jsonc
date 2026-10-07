@@ -23,8 +23,9 @@ Crate `tabnas-jsonc`, library `tabnas_jsonc`. The engine (`tabnas`),
 the jsonic grammar (`tabnas-jsonic`, which itself takes `tabnas-json`)
 and the fixture runner (`tabnas-support`, dev only) are **path
 dependencies on sibling checkouts** (`../../parser/rs`,
-`../../jsonic/rs`, `../../json/rs`, `../../support/rs`). None is
-published, so there is no registry version to fall back on.
+`../../jsonic/rs`, `../../json/rs`, `../../support/rs`). All of them
+are on crates.io, but the committed manifest names them by path alone,
+so there is no registry version to fall back on.
 
 ```bash
 cargo build --all-targets

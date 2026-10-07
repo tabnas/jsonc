@@ -129,8 +129,8 @@ jsonic historically is.
 
 Keeping JSONC as a thin plugin has three payoffs. The grammar is **just
 data** fed to a general engine, so the same machinery drives strict JSON,
-plain jsonic, and any plugin you write. The TypeScript and Go ports stay
-in lockstep because they **embed the identical grammar text**. And
+plain jsonic, and any plugin you write. All three ports stay in step on
+the grammar because they **embed the identical grammar text**. And
 behavior is **option-conditional without code branches**: comment lexing
 and trailing-comma support are flipped by lexer config and rule-group
 inclusion, not by maintaining separate grammars.

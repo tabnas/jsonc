@@ -10,9 +10,9 @@ package tabnasjsonc
 // ONLY — 318 documents the Go port had never been measured against, in a repo
 // whose stated discipline is "Go must match TS". This file closes that hole.
 //
-// Both runtimes read the SAME corpus (vendored at test/JSONTestSuite/, with
-// its upstream LICENSE — see THIRD_PARTY_NOTICES.md) and the SAME pin file
-// (test/known-lenient.json), so a TS/Go divergence on any pinned case shows up
+// All three runtimes read the SAME corpus (vendored at test/JSONTestSuite/,
+// with its upstream LICENSE — see THIRD_PARTY_NOTICES.md) and the SAME pin
+// file (test/known-lenient.json), so a divergence on any pinned case shows up
 // as a failure here rather than as silence.
 //
 // The pin is NOT a skip list: this test fails if a lenience is gained OR lost.

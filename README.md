@@ -32,12 +32,14 @@ npm install @tabnas/parser @tabnas/jsonic @tabnas/jsonc
 
 # Go
 go get github.com/tabnas/jsonc/go
+
+# Rust
+cargo add tabnas-jsonc
 ```
 
-The Rust crate is not published: it depends on the `tabnas`, `tabnas-jsonic`
-and `tabnas-json` crates by path, so clone `parser`, `jsonic` and `json`
-from `https://github.com/tabnas` beside this repository and add
-`tabnas-jsonc = { path = "../jsonc/rs" }` to your `Cargo.toml`
+The Rust crate is on crates.io too. Its `parse` is all the Rust example
+here needs, but a crate's dependencies are not in your scope, so add the
+engine as well when your code names it
 (see [`rs/README.md`](rs/README.md)).
 
 ## Example
