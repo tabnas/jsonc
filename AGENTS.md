@@ -150,9 +150,9 @@ Per runtime:
   holds it to the manifest, exempting only the siblings' own version
   entries.
 
-Clone the siblings (`parser`, `jsonic`, plus `debug`/`railroad` for the
-optional test and diagram) next to this repo and build their TS first. CI
-does this for you (see below).
+Only the Rust side needs sibling checkouts: clone `parser`, `jsonic`,
+`json` and `support` next to this repo. CI clones the siblings it builds
+against and links them over the registry copies (see below).
 
 ## Authority and alignment rules
 
@@ -251,7 +251,7 @@ hand edit between the markers fails there.
 TypeScript (from `ts/`):
 
 ```bash
-npm install            # auto-installs the jsonic/parser peers; resolves file: siblings
+npm install            # auto-installs the jsonic/parser peers; resolves the @tabnas devDependencies from the registry
 npm run build          # embeds grammar, then tsc --build src test
 npm test               # node --test over dist-test/*.test.js
 ```
