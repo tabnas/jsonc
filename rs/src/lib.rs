@@ -451,6 +451,14 @@ pub fn make_with(options: JsoncOptions) -> Tabnas {
     parser
         .use_plugin(plugin(), Some(options.to_value()))
         .expect("the embedded jsonc grammar is fixed and installs on a fresh jsonic instance");
+    // Every token of this grammar, jsonic's base included, is the engine's
+    // own matchers', and its one check reads no further than a number's
+    // literal, so a parse from a reader may hold a window of the source
+    // rather than all of it (`Tabnas::parse_reader`, admin ADR-30). Set on
+    // the parser this crate makes whole, not in [`jsonc`].
+    parser
+        .set_options(|options| options.lex.window = true)
+        .expect("lex.window sets");
     parser
 }
 

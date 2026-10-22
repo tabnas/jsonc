@@ -49,6 +49,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+A parser from `make()` or `make_with()` also reads a source from a reader, such as a file,
+with `parse_reader`. It holds a window of the text as it parses, never the
+whole document, and gives what `parse` gives for the same text.
+
 To layer the plugin on an instance of your own, install it through
 `use_plugin`, the `tn.use(jsonic).use(Jsonc, options)` of the TypeScript
 package, with the option bag under the TypeScript key names; or call
