@@ -3,13 +3,13 @@
 package tabnasjsonc
 
 import (
-	// jsonic registers the engine's text parser when it loads
-	// (tabnas.RegisterTextParser, in jsonic's init), and Jsonc reads its
-	// grammar with j.GrammarText, which fails with "no text parser
-	// registered" without one. Importing it here makes that hold for every
-	// program that imports this package, as the TypeScript plugin imports
-	// @tabnas/jsonic to read the same grammar.
-	_ "github.com/tabnas/jsonic/go"
+	// jsonic is the base Make builds on. It also registers the engine's
+	// text parser when it loads (tabnas.RegisterTextParser, in jsonic's
+	// init), and Jsonc reads its grammar with j.GrammarText, which fails
+	// with "no text parser registered" without one. Importing it here makes
+	// that hold for every program that imports this package, as the
+	// TypeScript plugin imports @tabnas/jsonic to read the same grammar.
+	tabnasjsonic "github.com/tabnas/jsonic/go"
 	tabnas "github.com/tabnas/parser/go"
 )
 
@@ -89,6 +89,37 @@ func Jsonc(j *tabnas.Tabnas, pluginOpts map[string]any) error {
 	})
 
 	return nil
+}
+
+// Make builds a JSONC parser whole: jsonic's base (tabnasjsonic.Make) with
+// Jsonc installed, as `tabnasjsonic.Make()` then `j.Use(Jsonc, opts)`
+// builds it, and with lex.window declared, so that Tabnas.ParseReader
+// reads a reader a window at a time rather than whole (admin ADR-30).
+// Every token of the grammar, jsonic's base included, is cut by the
+// engine's matchers; jsonic's string pre-scan, which refuses a raw control
+// character in a string, reads through the window (jsonic 0.7.11); and
+// neither plugin's actions read the source. The window is
+// declared here, on the parser this package makes whole, and not in Jsonc,
+// which a host may install beneath matchers of its own.
+//
+// The options are Jsonc's (allowTrailingComma, disallowComments); several
+// maps merge, a later key winning. Infallible by design: the grammar text
+// is fixed and the options are read as booleans, so a failure to install
+// is a bug in this package, and Make panics on it.
+func Make(options ...map[string]any) *tabnas.Tabnas {
+	merged := map[string]any{}
+	for _, o := range options {
+		for k, v := range o {
+			merged[k] = v
+		}
+	}
+	j := tabnasjsonic.Make()
+	if err := j.Use(Jsonc, merged); err != nil {
+		panic("jsonc: the embedded grammar does not install: " + err.Error())
+	}
+	yes := true
+	j.SetOptions(tabnas.Options{Lex: &tabnas.LexOptions{Window: &yes}})
+	return j
 }
 
 func toBool(v any) bool {

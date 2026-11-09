@@ -81,7 +81,7 @@ There are three implementations that must behave identically — TypeScript
 | Path | What it is |
 |---|---|
 | [`ts/`](ts/) | **Canonical** TypeScript implementation — the `@tabnas/jsonc` package. Plugin in `src/jsonc.ts`. Imports the engine as `@tabnas/parser` and the base grammar as `@tabnas/jsonic`. |
-| [`go/`](go/) | Go port — `github.com/tabnas/jsonc/go`. Plugin in `jsonc.go`. Imports the engine as `github.com/tabnas/parser/go` (`tabnas`), and not jsonic; jsonic's own API is used by the stamped `go/clib/core.go` (`host.Make()`) and by the tests. |
+| [`go/`](go/) | Go port — `github.com/tabnas/jsonc/go`. Plugin in `jsonc.go`, with `Make`, the whole parser. Imports the engine as `github.com/tabnas/parser/go` (`tabnas`) and jsonic as `github.com/tabnas/jsonic/go` (`tabnasjsonic`), whose `Make` is the base `Make` builds on; the stamped `go/clib/core.go` (`host.Make()`) and the tests use jsonic's API too. |
 | [`rs/`](rs/) | Rust port — the `tabnas-jsonc` crate (library `tabnas_jsonc`). Plugin in `src/lib.rs`: `jsonc` / `plugin()`, the typed `JsoncOptions`, `make` / `make_with` / `parse`, and a nesting limit (`DEPTH_LIMIT`) the other runtimes do not have (see `DIVERGENCE.md`). Depends on sibling `tabnas/parser`, `tabnas/jsonic` (and through it `tabnas/json`) and, tests only, `tabnas/support` checkouts via Cargo `path` dependencies. Library only: no CLI. See [`rs/AGENTS.md`](rs/AGENTS.md). |
 | [`tabnas.plugin.json`](tabnas.plugin.json) | The plugin manifest, with the format's **translation part**: its `translate` object says JSONC reads as a tree and writes from one, whatever its root (`root`), through the `json` render [alchemy](https://github.com/tabnas/alchemy) carries, and its `loss` lines, which a host prints verbatim, say what that render does not keep (comments, trailing commas, and a number that is not finite, which JSON has no spelling for and is written as null). Its `translate.transduce` names the format's **transducer part**, [`alchemy/transduce.alc`](alchemy/transduce.alc): the document's JSON events from the jsonc grammar's rule passes, the library's `transduce-tree` over the grammar's rules (json's, once the lexer and the rules have taken the comments and the trailing commas), through which a host that reads parser events (alchemy-cli's `translate` and `run --grammar`) reads a document; every event is the one the walk of the grammar's value gives, a number's lexeme aside. `npm run embed` in `ts/` copies the manifest and the transducer into every runtime (`ts/src/translate.ts`, `go/translate/`, and `rs/translate/`, whose manifest the Rust crate serves as `manifest_text()`), and each runtime's translation test holds each copy to its file: change the manifest or the part at the root, then run the embed. |
 | [`DIVERGENCE.md`](DIVERGENCE.md) | Where a port produces a different result for the same input. TS and Go have none; the Rust port has two engine-rooted ones, both pinned by its tests. |
@@ -131,12 +131,12 @@ Per runtime:
   directly, and carries `github.com/tabnas/json/go` as the **indirect**
   module jsonic pulls in transitively. `jsonc.go` imports the engine as
   `tabnas` for the engine's types (`tabnas.Tabnas`, `tabnas.Options`,
-  `tabnas.GrammarSetting`, …) and imports jsonic blank (`_`), for the
-  text parser jsonic registers when it loads: `Jsonc` reads its grammar
-  with `j.GrammarText`, which fails with "no text parser registered"
-  without one, and `TestJsoncImportsJsonic` keeps the import. jsonic's
-  own API is used by the stamped `go/clib/core.go` (`host.Make()`) and
-  by the tests. **There is no `replace`
+  `tabnas.GrammarSetting`, …) and imports jsonic, whose `Make` is the
+  base `Make` builds on, and which registers the text parser when it
+  loads: `Jsonc` reads its grammar with `j.GrammarText`, which fails with
+  "no text parser registered" without one, and `TestJsoncImportsJsonic`
+  keeps the import. The stamped `go/clib/core.go` (`host.Make()`) and
+  the tests use jsonic's API too. **There is no `replace`
   directive in `go.mod`, and none belongs there**: every requirement
   names a published version, so a plain `go test` resolves the module
   cache. Testing against an unreleased sibling means a `go.work` one
@@ -248,6 +248,49 @@ hand edit between the markers fails there.
   to `'comma'` unless `allowTrailingComma` is passed (which leaves the
   `comma`-group trailing-comma alts active). Order matters — Grammar runs
   an internal `SetOptions`, so applying these after it avoids clobbering.
+
+## The whole parser, and a parse from a reader (`lex.window`)
+
+Each runtime exports a constructor that builds the parser whole, jsonic's
+base with the plugin installed, and declares `lex.window` on it, so that a
+parse from a reader is read a window at a time rather than whole (admin
+ADR-30 and ADR-33):
+
+| Runtime | Constructor | Builds |
+|---|---|---|
+| TypeScript | `make(options?)` | `new Tabnas().use(jsonic).use(Jsonc, options)` |
+| Go | `Make(options ...map[string]any)` | `tabnasjsonic.Make()` then `j.Use(Jsonc, options)` |
+| Rust | `make()`, `make_with(options)` | `tabnas_jsonic::make()` then `use_plugin(plugin(), options)` |
+
+Hosts call these (dmog among them) rather than composing the plugin
+themselves, so that the window reaches the parser they read with. The
+window is declared on the whole parser, after the plugin, and never in
+the plugin (`Jsonc`, `jsonc`, `plugin()`), which a host may install
+beneath matchers of its own, nor in jsonic's constructors, which stay
+window-less as the base other grammars build on.
+
+It may be declared because nothing jsonc parses with reads the source
+except through the window: every token is cut by the engine's built-in
+matchers, jsonic's Go string pre-scan (which refuses a raw control
+character in a string) reads through the window from jsonic 0.7.11, and
+`number.exclude` judges a number the number matcher has already cut. A matcher or action added here that
+reads the text must read it through the window too (`lex.window()` and
+`lex.fill(n)`, `Lex.Window` and `Lex.Fill`, `Lexer::window` and
+`Lexer::fill`), or the constructors must stop declaring it.
+
+The reader tests hold all three to that: `ts/test/window.test.ts`,
+`go/window_test.go` and `rs/tests/reader_test.rs`. Each asserts its
+constructor declares the window and the plugin does not; every fixture
+row under its `opts`, and every JSONTestSuite document in each of the
+three modes, parses the same from a reader, in pieces of 1, 3 and 64
+bytes, as from its text, in TypeScript and Rust under windows of a few
+characters as well as the engine's own (the corpus documents that are not
+UTF-8 a reader refuses as `unreadable`); and tokens longer than the
+window and long documents do too, an error at the end placed where the
+whole text places it. Go's small-window hook is unexported, so Go reaches
+the window's edge with tokens longer than its 64 KiB margin. The
+TypeScript and Go tests also hold `make`/`Make` to the composition they
+replace, row for row.
 
 ## Build & test
 

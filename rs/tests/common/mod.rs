@@ -61,7 +61,7 @@ pub fn to_failure(error: tabnas::TabnasError) -> Failure {
 /// cannot work: after the shared codec, `\0` from `\0` and `\0` from
 /// `\\0` are the same two characters.
 ///
-/// Kept byte-identical to `unescapeJsonc` in `ts/test/parity.test.ts`
+/// Kept byte-identical to `unescapeJsonc` in `ts/test/unescape.ts`
 /// and `specUnescape` in `go/parity_test.go`.
 pub fn unescape_jsonc(cell: &str) -> String {
     if !cell.contains('\\') {

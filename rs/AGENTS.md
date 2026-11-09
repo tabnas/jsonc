@@ -12,6 +12,7 @@ and this file only covers what is specific to this crate.
 | `tests/parity_test.rs` | every `../test/spec/*.tsv` fixture through `tabnas_support::Runner::new_with_row`, a fresh parser per row from the `opts` column |
 | `tests/jsontestsuite_test.rs` | the vendored RFC 8259 corpus in all three option modes against `../test/known-lenient.json`; fails, never skips |
 | `tests/jsonc_test.rs` | the port of `go/jsonc_test.go` (which mirrors `ts/test/jsonc.test.ts`), plus what a fixture cannot say: group tags, the rule graph, option round-trips, layering, derive, the nesting boundary, the embed against the file on disk, threads |
+| `tests/reader_test.rs` | a parse from a reader: `make()` declares `lex.window` and the plugin does not; every fixture row and every corpus document in all three modes parses the same from a reader as from its text, in small pieces and under windows of a few characters; tokens longer than the window and long documents too (root `AGENTS.md`, "The whole parser, and a parse from a reader") |
 | `tests/perf_test.rs` | instance reuse beats rebuild-per-parse, mirroring `go/perf_test.go` |
 | `tests/version_test.rs` | Cargo.toml == `VERSION` == ts/package.json |
 | `tests/translate_test.rs` | the translation part: the embedded manifest is `../tabnas.plugin.json`, the embed it names is the one `translate()` carries (none, for JSONC), and its `translate` object reads and writes a tree at any root through the `json` render alchemy carries, and its loss lines are sentences, one of them that a number that is not finite is written as null |
@@ -152,7 +153,7 @@ The input cell is decoded by this crate's own `unescape_jsonc`, not the
 shared codec, because jsonc's fixtures need `\0` decoded to NUL (a raw
 NUL in a string must be rejected as `unprintable`, and cannot be
 written literally in a .tsv). It is kept byte-identical to
-`unescapeJsonc` in `ts/test/parity.test.ts` and `specUnescape` in
+`unescapeJsonc` in `ts/test/unescape.ts` and `specUnescape` in
 `go/parity_test.go`.
 
 ## The corpus test never skips

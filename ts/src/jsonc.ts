@@ -75,7 +75,21 @@ function Jsonc(tn: Tabnas, options: JsoncOptions) {
   })
 }
 
-export { VERSION, Jsonc }
+// Build a JSONC parser whole: jsonic's base with the plugin installed, as
+// `new Tabnas().use(jsonic).use(Jsonc, options)` builds it, and with
+// `lex.window` declared, so that `tn.parseReader` reads a reader a window
+// at a time rather than whole (admin ADR-30). Every token of the grammar,
+// jsonic's base included, is cut by the engine's own matchers, and neither
+// plugin's actions read the source. The window is declared here, on the
+// parser this package makes whole, and not in `Jsonc`, which a host may
+// install beneath matchers of its own.
+function make(options: JsoncOptions = {}): Tabnas {
+  const tn = new Tabnas().use(jsonic).use(Jsonc, options)
+  tn.options({ lex: { window: true } })
+  return tn
+}
+
+export { VERSION, Jsonc, make }
 
 export type { JsoncOptions }
 
