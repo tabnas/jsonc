@@ -81,7 +81,7 @@ func TestSpec(t *testing.T) {
 // RAW cell. Two passes cannot work: after the shared codec, \0 from \0 and
 // \0 from \\0 are the same two characters.
 //
-// Kept byte-identical to unescapeJsonc in ts/test/parity.test.ts.
+// Kept byte-identical to unescapeJsonc in ts/test/unescape.ts.
 func specUnescape(s string) string {
 	if !strings.Contains(s, `\`) {
 		return s

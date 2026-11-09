@@ -17,42 +17,17 @@ import { findSpecDir, makeRunner, parseExpect } from '@tabnas/support'
 
 import { Jsonc } from '../dist/jsonc.js'
 
-// The one thing this repo does not take from @tabnas/support: its own
-// escape codec, because jsonc's fixtures need a sixth escape.
-//
-// A raw NUL inside a string must be rejected as `unprintable`, and a NUL
-// cannot be written literally in a .tsv — git would call the file binary.
-// The shared codec passes `\0` through unchanged on purpose (a fixture has
-// to be able to carry a literal backslash-zero; json5's `\\0` rows rely on
-// exactly that), so decoding it has to happen HERE, in one pass over the
-// RAW cell. Two passes cannot work: after the shared codec, `\0` from `\0`
-// and `\0` from `\\0` are the same two characters.
-//
-// Kept byte-identical to `specUnescape` in go/parity_test.go.
-function unescapeJsonc(s: string): string {
-  if (!s.includes('\\')) return s
-  let out = ''
-  for (let i = 0; i < s.length; i++) {
-    const c = s[i]
-    if (c === '\\' && i + 1 < s.length) {
-      const n = s[i + 1]
-      if (n === 'n') { out += '\n'; i++; continue }
-      if (n === 'r') { out += '\r'; i++; continue }
-      if (n === 't') { out += '\t'; i++; continue }
-      if (n === '0') { out += '\0'; i++; continue }
-      if (n === '\\') { out += '\\'; i++; continue }
-    }
-    out += c
-  }
-  return out
-}
+import { unescapeJsonc } from './unescape.js'
+
+// The fixtures' own escape codec (see unescape.ts): jsonc's fixtures need
+// a sixth escape, `\0`, which the shared codec passes through.
 
 makeRunner({
   // A fresh Tabnas per row: the `opts` column is per-case, and plugin
   // options must not leak from one row into the next.
   //
   // The runner's own decoding of the input column is bypassed — see
-  // unescapeJsonc above — so the raw cell is read and decoded here.
+  // unescapeJsonc in unescape.ts — so the raw cell is read and decoded here.
   parse: (_input, row) => {
     const input = unescapeJsonc(row.named('input'))
     const opts = row.named('opts')
