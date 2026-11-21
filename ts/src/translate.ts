@@ -71,7 +71,7 @@ const TRANSLATION: TranslationParts = Object.freeze({
   render: Object.freeze({ entry: "json" }),
   transduce: Object.freeze({ entry: "jsonc-transduce", source: `; JSONC's transducer part: the document's JSON events from the jsonc
 ; grammar's rule passes (ParserEvents/1), streamed as the parser makes
-; them, so that a host that reads parser events (alchemy-cli's translate
+; them, so that a host that reads parser events (dmog's translate
 ; and run --grammar, aless) reads a JSONC document through this file rather
 ; than through transduce's inference over the grammar's rule events.
 ;
@@ -86,7 +86,7 @@ const TRANSLATION: TranslationParts = Object.freeze({
 ; lexeme a number token keeps (2.50 is written 2.50). A document holding
 ; no value, comments alone, is one null, as the grammar reads it. Every
 ; event is the one the walk of the grammar's value gives, a number's
-; lexeme aside, which alchemy-cli's transduce.tsv runner holds it to; a
+; lexeme aside, which dmog's transduce.tsv runner holds it to; a
 ; repeated member is streamed twice, as the document spells it, for a
 ; tree-contract or a capture's policy to judge.
 def jsonc-transduce [input]
